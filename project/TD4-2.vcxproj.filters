@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="application\Order.cpp" />
+    <ClCompile Include="application\scene\SampleScene.cpp" />
+    <ClCompile Include="application\scene\SceneRegistration.cpp" />
+    <ClCompile Include="application\scene\TitleScene.cpp" />
+    <ClCompile Include="application\scene\Stage\StageScene.cpp" />
+    <ClCompile Include="application\scene\Clear\GameClearScene.cpp" />
+    <ClCompile Include="application\scene\GameOverScene.cpp" />
+    <ClCompile Include="application\scene\User\User1Scene.cpp" />
+    <ClCompile Include="application\scene\User\User2Scene.cpp" />
+    <ClCompile Include="application\scene\User\User3Scene.cpp" />
+    <ClCompile Include="application\scene\User\User4Scene.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="application\Order.h" />
+    <ClInclude Include="application\scene\SampleScene.h" />
+    <ClInclude Include="application\scene\GameScenes.h" />
+    <ClInclude Include="application\scene\SceneRegistration.h" />
+    <ClInclude Include="application\scene\TitleScene.h" />
+    <ClInclude Include="application\scene\Stage\StageScene.h" />
+    <ClInclude Include="application\scene\Clear\GameClearScene.h" />
+    <ClInclude Include="application\scene\GameOverScene.h" />
+    <ClInclude Include="application\scene\User\User1Scene.h" />
+    <ClInclude Include="application\scene\User\User2Scene.h" />
+    <ClInclude Include="application\scene\User\User3Scene.h" />
+    <ClInclude Include="application\scene\User\User4Scene.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="application">
+      <UniqueIdentifier>{829097b8-eddb-4079-ab4b-cbe06e984fa4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

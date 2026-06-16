@@ -2,8 +2,8 @@
 
 #include "SceneManager.h"
 #include "GameScenes.h"
-#include "SampleScene.h"
-#include"TitleScene.h"
+#include "Sample/SampleScene.h"
+#include"Title/TitleScene.h"
 #include"Stage/StageScene.h"
 #include"Clear/GameClearScene.h"
 #include"Over/GameOverScene.h"

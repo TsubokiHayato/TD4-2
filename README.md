@@ -80,6 +80,26 @@ project/
 
 ---
 
+## リソース（Resources）の置き場ルール
+
+各アセットは `project/Resources/` 配下の種類別フォルダに置きます。**コードに渡すパスは「その種類フォルダからの相対」**です（`Resources/` までは API が自動で付けます）。
+
+| 種類 | 置き場 | コードでの指定例 | 実ファイル |
+| --- | --- | --- | --- |
+| 3Dモデル | `Resources/Models/` | `obj->Initialize("axis/axis.obj")` | `Resources/Models/axis/axis.obj` |
+| テクスチャ | `Resources/Textures/` | `sprite->Initialize("uvChecker.png")` | `Resources/Textures/uvChecker.png` |
+| 音声(WAV) | `Resources/Audio/` | `audio->Initialize("test.wav")` | `Resources/Audio/test.wav` |
+| パーティクル画像 | `Resources/Textures/` | `preset.texture = "particle.png"` | `Resources/Textures/particle.png` |
+
+その他のフォルダ：`Font/`（フォント）, `Particles/`（パーティクル定義）, `Stage/`（ステージデータ）, `Text/`（テキスト）, `Shaders/`（**自動生成・git管理外**。エンジンから PreBuild でコピーされる）。
+
+ルール:
+- **モデルは1モデル＝1フォルダ**（`Models/player/player.obj` のように）。`.mtl` やテクスチャも同じフォルダに。
+- パスの**大文字小文字・拡張子**はファイル名と完全一致させること（出ない原因の大半がここ）。
+- 追加したアセットは **git に add** を忘れずに（メンバーの環境で「ファイルが無い」事故防止）。
+
+---
+
 ## シーンを追加する
 
 3手順だけです。詳しい手順とコピペ用テンプレは

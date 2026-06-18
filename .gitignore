@@ -11,3 +11,6 @@ x64/
 
 # engine-core(submodule) から PreBuild でコピーされる実行時シェーダ
 /project/Resources/Shaders/
+
+# ImGui がウィンドウ配置を実行時に自動保存する生成物（差分ノイズになるため追跡しない）
+/project/imgui.ini

@@ -1,5 +1,6 @@
 #include "SampleScene.h"
 #include "GameScenes.h"
+#include "SceneManager.h"     // シーン遷移（ChangeScene）
 
 #include "Input.h"            // キーボード / マウス / ゲームパッド入力（エンジンが毎フレーム自動 Update）
 #include "IParticleEmitter.h" // ParticlePreset 構造体
@@ -17,15 +18,11 @@ using namespace TuboEngine;
 //  Initialize ── 生成・読み込み（最初に1回だけ呼ばれる）
 // =============================================================================
 void SampleScene::Initialize() {
-	// 【重要】このシーンを「現在シーン」として固定する。
-	// IScene::sceneNo は static で、放置すると初期値で別シーンへ飛ぶクセがあるため、
-	// 各シーンの Initialize 先頭で自分の番号を宣言しておくのが作法。
-	SetSceneNo(SAMPLE);
-
 	// ───────────────────────────────────────────────────────────
 	//  ① カメラ ── 3D 描画には最低1台必要。
-	//     投影パラメータ(fovY/aspect/near/far)はコンストラクタで既定設定済み。
-	//     ※ scale の既定が {0,0,0} のため、必ず {1,1,1} を入れること（忘れると何も映らない）。
+	//     投影パラメータ(fovY/aspect/near/far)も scale も、コンストラクタで
+	//     既定設定済み（scale は {1,1,1}）。下では分かりやすさのため明示している。
+	//     ※ 別シーンへ移るときは SceneManager::GetInstance()->ChangeScene(番号) を呼ぶ。
 	// ───────────────────────────────────────────────────────────
 	// ※ Camera はグローバルにも前方宣言があるため TuboEngine:: を明示する。
 	camera_ = std::make_unique<TuboEngine::Camera>();
@@ -201,6 +198,32 @@ void SampleScene::DrawGuideImGui() {
 
 	ImGui::TextWrapped("このシーンは TuboEngine の使い方を一通り体験できる教材です。");
 	ImGui::Separator();
+
+	// --- シーン遷移テスト ---------------------------------------------------
+	//  遷移APIは SceneManager::GetInstance()->ChangeScene(番号) の一本だけ。
+	//  押すと「次のフレーム」で切り替わる（その場では差し替わらないので安全）。
+	if (ImGui::CollapsingHeader("シーン遷移テスト（ChangeScene）", ImGuiTreeNodeFlags_DefaultOpen)) {
+		SceneManager* sm = SceneManager::GetInstance();
+		if (ImGui::Button("Title へ"))  { sm->ChangeScene(TITLE); }
+		ImGui::SameLine();
+		if (ImGui::Button("Stage へ"))  { sm->ChangeScene(STAGE); }
+		ImGui::SameLine();
+		if (ImGui::Button("Clear へ"))  { sm->ChangeScene(CLEAR); }
+		ImGui::SameLine();
+		if (ImGui::Button("Over へ"))   { sm->ChangeScene(OVER); }
+
+		if (ImGui::Button("User1 へ"))  { sm->ChangeScene(USER1); }
+		ImGui::SameLine();
+		if (ImGui::Button("User2 へ"))  { sm->ChangeScene(USER2); }
+		ImGui::SameLine();
+		if (ImGui::Button("User3 へ"))  { sm->ChangeScene(USER3); }
+		ImGui::SameLine();
+		if (ImGui::Button("User4 へ"))  { sm->ChangeScene(USER4); }
+
+		ImGui::Spacing();
+		// 同じ番号を渡すとリロード（Finalize → Initialize）。生成し直しの確認に。
+		if (ImGui::Button("このシーンをリロード")) { sm->ChangeScene(SAMPLE); }
+	}
 
 	if (ImGui::CollapsingHeader("操作方法", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::BulletText("WASD / Q,E : 座標軸オブジェクトを移動");

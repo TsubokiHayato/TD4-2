@@ -3,30 +3,30 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="application\Order.cpp" />
-    <ClCompile Include="application\scene\SampleScene.cpp" />
     <ClCompile Include="application\scene\SceneRegistration.cpp" />
-    <ClCompile Include="application\scene\TitleScene.cpp" />
     <ClCompile Include="application\scene\Stage\StageScene.cpp" />
     <ClCompile Include="application\scene\Clear\GameClearScene.cpp" />
-    <ClCompile Include="application\scene\GameOverScene.cpp" />
-    <ClCompile Include="application\scene\User\User1Scene.cpp" />
+    <ClCompile Include="application\scene\User\SatouScene.cpp" />
     <ClCompile Include="application\scene\User\User2Scene.cpp" />
     <ClCompile Include="application\scene\User\User3Scene.cpp" />
     <ClCompile Include="application\scene\User\User4Scene.cpp" />
+    <ClCompile Include="application\scene\Sample\SampleScene.cpp" />
+    <ClCompile Include="application\scene\Title\TitleScene.cpp" />
+    <ClCompile Include="application\scene\Over\GameOverScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
-    <ClInclude Include="application\scene\SampleScene.h" />
     <ClInclude Include="application\scene\GameScenes.h" />
     <ClInclude Include="application\scene\SceneRegistration.h" />
-    <ClInclude Include="application\scene\TitleScene.h" />
     <ClInclude Include="application\scene\Stage\StageScene.h" />
     <ClInclude Include="application\scene\Clear\GameClearScene.h" />
-    <ClInclude Include="application\scene\GameOverScene.h" />
-    <ClInclude Include="application\scene\User\User1Scene.h" />
+    <ClInclude Include="application\scene\User\SatouScene.h" />
     <ClInclude Include="application\scene\User\User2Scene.h" />
     <ClInclude Include="application\scene\User\User3Scene.h" />
     <ClInclude Include="application\scene\User\User4Scene.h" />
+    <ClInclude Include="application\scene\Sample\SampleScene.h" />
+    <ClInclude Include="application\scene\Title\TitleScene.h" />
+    <ClInclude Include="application\scene\Over\GameOverScene.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="application">

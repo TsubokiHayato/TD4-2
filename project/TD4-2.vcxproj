@@ -126,7 +126,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="application\scene\Stage\StageScene.cpp" />
     <ClCompile Include="application\scene\Clear\GameClearScene.cpp" />
     <ClCompile Include="application\scene\Over\GameOverScene.cpp" />
-    <ClCompile Include="application\scene\User\User1Scene.cpp" />
+    <ClCompile Include="application\scene\User\SatouScene.cpp" />
     <ClCompile Include="application\scene\User\User2Scene.cpp" />
     <ClCompile Include="application\scene\User\User3Scene.cpp" />
     <ClCompile Include="application\scene\User\User4Scene.cpp" />
@@ -140,7 +140,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="application\scene\Stage\StageScene.h" />
     <ClInclude Include="application\scene\Clear\GameClearScene.h" />
     <ClInclude Include="application\scene\Over\GameOverScene.h" />
-    <ClInclude Include="application\scene\User\User1Scene.h" />
+    <ClInclude Include="application\scene\User\SatouScene.h" />
     <ClInclude Include="application\scene\User\User2Scene.h" />
     <ClInclude Include="application\scene\User\User3Scene.h" />
     <ClInclude Include="application\scene\User\User4Scene.h" />

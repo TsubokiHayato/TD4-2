@@ -3,9 +3,9 @@
 #include "Camera.h"
 #include <memory>
 
-// User1 の個人開発用シーン（サンドボックス）
+// Satou の個人開発用シーン（サンドボックス）
 // ここに自分の処理を足していく（カメラだけ持った最小の雛形）。
-class User1Scene : public IScene {
+class SatouScene : public IScene {
 public:
 	void Initialize() override;
 	void Update() override;

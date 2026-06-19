@@ -214,11 +214,11 @@ void SampleScene::DrawGuideImGui() {
 
 		if (ImGui::Button("User1 へ"))  { sm->ChangeScene(USER1); }
 		ImGui::SameLine();
-		if (ImGui::Button("User2 へ"))  { sm->ChangeScene(USER2); }
+		if (ImGui::Button("Oosaki へ"))  { sm->ChangeScene(Oosaki); }
 		ImGui::SameLine();
-		if (ImGui::Button("User3 へ"))  { sm->ChangeScene(USER3); }
+		if (ImGui::Button("Sano へ"))  { sm->ChangeScene(Sano); }
 		ImGui::SameLine();
-		if (ImGui::Button("User4 へ"))  { sm->ChangeScene(USER4); }
+		if (ImGui::Button("Tubo へ"))  { sm->ChangeScene(Tubo); }
 
 		ImGui::Spacing();
 		// 同じ番号を渡すとリロード（Finalize → Initialize）。生成し直しの確認に。

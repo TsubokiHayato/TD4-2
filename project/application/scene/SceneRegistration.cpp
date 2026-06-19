@@ -8,9 +8,9 @@
 #include"Clear/GameClearScene.h"
 #include"Over/GameOverScene.h"
 #include"User/User1Scene.h"
-#include"User/User2Scene.h"
-#include"User/User3Scene.h"
-#include"User/User4Scene.h"
+#include"User/OosakiScene.h"
+#include"User/SanoScene.h"
+#include"User/TuboScene.h"
 
 #include <memory>
 
@@ -23,7 +23,7 @@ void RegisterGameScenes() {
 	sm->RegisterScene(CLEAR, [] { return std::make_unique<GameClearScene>(); }, "GameClear");
 	sm->RegisterScene(OVER, [] { return std::make_unique<GameOverScene>(); }, "GameOver");
 	sm->RegisterScene(USER1, [] { return std::make_unique<User1Scene>(); }, "User1");
-	sm->RegisterScene(USER2, [] { return std::make_unique<User2Scene>(); }, "User2");
-	sm->RegisterScene(USER3, [] { return std::make_unique<User3Scene>(); }, "User3");
-	sm->RegisterScene(USER4, [] { return std::make_unique<User4Scene>(); }, "User4");
+	sm->RegisterScene(Oosaki, [] { return std::make_unique<OosakiScene>(); }, "Oosaki");
+	sm->RegisterScene(Sano, [] { return std::make_unique<SanoScene>(); }, "Sano");
+	sm->RegisterScene(Tubo, [] { return std::make_unique<TuboScene>(); }, "Tubo");
 }

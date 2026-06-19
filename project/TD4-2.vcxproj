@@ -127,9 +127,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="application\scene\Clear\GameClearScene.cpp" />
     <ClCompile Include="application\scene\Over\GameOverScene.cpp" />
     <ClCompile Include="application\scene\User\User1Scene.cpp" />
-    <ClCompile Include="application\scene\User\User2Scene.cpp" />
-    <ClCompile Include="application\scene\User\User3Scene.cpp" />
-    <ClCompile Include="application\scene\User\User4Scene.cpp" />
+    <ClCompile Include="application\scene\User\SanoScene.cpp" />
+    <ClCompile Include="application\scene\User\OosakiScene.cpp" />
+    <ClCompile Include="application\scene\User\TuboScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
@@ -141,9 +141,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="application\scene\Clear\GameClearScene.h" />
     <ClInclude Include="application\scene\Over\GameOverScene.h" />
     <ClInclude Include="application\scene\User\User1Scene.h" />
-    <ClInclude Include="application\scene\User\User2Scene.h" />
-    <ClInclude Include="application\scene\User\User3Scene.h" />
-    <ClInclude Include="application\scene\User\User4Scene.h" />
+    <ClInclude Include="application\scene\User\SanoScene.h" />
+    <ClInclude Include="application\scene\User\OosakiScene.h" />
+    <ClInclude Include="application\scene\User\TuboScene.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="EngineCore\EngineLib\EngineLib.vcxproj">

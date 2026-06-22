@@ -194,104 +194,124 @@ void SampleScene::ImGuiDraw() {
 // このシーン用のガイド＋操作 UI 本体。
 void SampleScene::DrawGuideImGui() {
 #ifdef USE_IMGUI
-	ImGui::Begin("SampleScene Guide");
+	if (ImGuiManager::GetInstance()->BeginPanel("エンジンガイド")) {
 
-	ImGui::TextWrapped("このシーンは TuboEngine の使い方を一通り体験できる教材です。");
-	ImGui::Separator();
-
-	// --- シーン遷移テスト ---------------------------------------------------
-	//  遷移APIは SceneManager::GetInstance()->ChangeScene(番号) の一本だけ。
-	//  押すと「次のフレーム」で切り替わる（その場では差し替わらないので安全）。
-	if (ImGui::CollapsingHeader("シーン遷移テスト（ChangeScene）", ImGuiTreeNodeFlags_DefaultOpen)) {
-		SceneManager* sm = SceneManager::GetInstance();
-		if (ImGui::Button("Title へ"))  { sm->ChangeScene(TITLE); }
-		ImGui::SameLine();
-		if (ImGui::Button("Stage へ"))  { sm->ChangeScene(STAGE); }
-		ImGui::SameLine();
-		if (ImGui::Button("Clear へ"))  { sm->ChangeScene(CLEAR); }
-		ImGui::SameLine();
-		if (ImGui::Button("Over へ"))   { sm->ChangeScene(OVER); }
-
-		if (ImGui::Button("User1 へ"))  { sm->ChangeScene(USER1); }
-		ImGui::SameLine();
-		if (ImGui::Button("Oosaki へ"))  { sm->ChangeScene(Oosaki); }
-		ImGui::SameLine();
-		if (ImGui::Button("Sano へ"))  { sm->ChangeScene(Sano); }
-		ImGui::SameLine();
-		if (ImGui::Button("Tubo へ"))  { sm->ChangeScene(Tubo); }
-
-		ImGui::Spacing();
-		// 同じ番号を渡すとリロード（Finalize → Initialize）。生成し直しの確認に。
-		if (ImGui::Button("このシーンをリロード")) { sm->ChangeScene(SAMPLE); }
-	}
-
-	if (ImGui::CollapsingHeader("操作方法", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::BulletText("WASD / Q,E : 座標軸オブジェクトを移動");
-		ImGui::BulletText("F2 : デバッグカメラ ON/OFF");
-		ImGui::BulletText("デバッグカメラ ON 中 → 右ドラッグ回転 / 中ドラッグ平行移動 / ホイールでズーム");
-	}
-
-	if (ImGui::CollapsingHeader("ライブ操作", ImGuiTreeNodeFlags_DefaultOpen)) {
-		// --- 3D オブジェクトの移動速度 ---
-		ImGui::SliderFloat("Move Speed", &moveSpeed_, 0.01f, 0.5f);
-
-		// --- 球のライト計算方式 ---
-		const char* lightNames[] = {"0:Directional(平行光源)", "1:Lambert", "2:Blinn-Phong", "3:PointLight", "4:SpotLight"};
-		ImGui::Combo("Sphere Light", &lightType_, lightNames, IM_ARRAYSIZE(lightNames));
-
-		// --- デバッグ表示トグル ---
-		ImGui::Checkbox("Grid", &showGrid_);
-		ImGui::SameLine();
-		ImGui::Checkbox("Axis/Sphere Helpers", &showHelpers_);
-
-		// --- 音声操作 ---
+		ImGui::TextWrapped("このシーンは TuboEngine の使い方を一通り体験できる教材です。");
 		ImGui::Separator();
-		ImGui::Text("Audio (test.wav)");
-		if (ImGui::Button(bgmPlaying_ ? "Stop" : "Play(loop)")) {
-			if (bgmPlaying_) {
-				bgm_->Stop();
-			} else {
-				bgm_->Play(true, bgmVolume_); // loop=true
+
+		// --- シーン遷移テスト ---------------------------------------------------
+		//  遷移APIは SceneManager::GetInstance()->ChangeScene(番号) の一本だけ。
+		//  押すと「次のフレーム」で切り替わる（その場では差し替わらないので安全）。
+		if (ImGui::CollapsingHeader("シーン遷移テスト（ChangeScene）", ImGuiTreeNodeFlags_DefaultOpen)) {
+			SceneManager* sm = SceneManager::GetInstance();
+			if (ImGui::Button("Title へ")) {
+				sm->ChangeScene(TITLE);
 			}
-			bgmPlaying_ = !bgmPlaying_;
+			ImGui::SameLine();
+			if (ImGui::Button("Stage へ")) {
+				sm->ChangeScene(STAGE);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Clear へ")) {
+				sm->ChangeScene(CLEAR);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Over へ")) {
+				sm->ChangeScene(OVER);
+			}
+
+			if (ImGui::Button("User1 へ")) {
+				sm->ChangeScene(USER1);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Oosaki へ")) {
+				sm->ChangeScene(Oosaki);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Sano へ")) {
+				sm->ChangeScene(Sano);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Tubo へ")) {
+				sm->ChangeScene(Tubo);
+			}
+
+			ImGui::Spacing();
+			// 同じ番号を渡すとリロード（Finalize → Initialize）。生成し直しの確認に。
+			if (ImGui::Button("このシーンをリロード")) {
+				sm->ChangeScene(SAMPLE);
+			}
 		}
-		if (ImGui::SliderFloat("Volume", &bgmVolume_, 0.0f, 1.0f)) {
-			bgm_->SetVolume(bgmVolume_);
+
+		if (ImGui::CollapsingHeader("操作方法", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::BulletText("WASD / Q,E : 座標軸オブジェクトを移動");
+			ImGui::BulletText("F2 : デバッグカメラ ON/OFF");
+			ImGui::BulletText("デバッグカメラ ON 中 → 右ドラッグ回転 / 中ドラッグ平行移動 / ホイールでズーム");
 		}
+
+		if (ImGui::CollapsingHeader("ライブ操作", ImGuiTreeNodeFlags_DefaultOpen)) {
+			// --- 3D オブジェクトの移動速度 ---
+			ImGui::SliderFloat("Move Speed", &moveSpeed_, 0.01f, 0.5f);
+
+			// --- 球のライト計算方式 ---
+			const char* lightNames[] = {"0:Directional(平行光源)", "1:Lambert", "2:Blinn-Phong", "3:PointLight", "4:SpotLight"};
+			ImGui::Combo("Sphere Light", &lightType_, lightNames, IM_ARRAYSIZE(lightNames));
+
+			// --- デバッグ表示トグル ---
+			ImGui::Checkbox("Grid", &showGrid_);
+			ImGui::SameLine();
+			ImGui::Checkbox("Axis/Sphere Helpers", &showHelpers_);
+
+			// --- 音声操作 ---
+			ImGui::Separator();
+			ImGui::Text("Audio (test.wav)");
+			if (ImGui::Button(bgmPlaying_ ? "Stop" : "Play(loop)")) {
+				if (bgmPlaying_) {
+					bgm_->Stop();
+				} else {
+					bgm_->Play(true, bgmVolume_); // loop=true
+				}
+				bgmPlaying_ = !bgmPlaying_;
+			}
+			if (ImGui::SliderFloat("Volume", &bgmVolume_, 0.0f, 1.0f)) {
+				bgm_->SetVolume(bgmVolume_);
+			}
+		}
+
+		if (ImGui::CollapsingHeader("入力の状態 (Input)")) {
+			Input* input = Input::GetInstance();
+			const Math::Vector2& mp = input->GetMousePosition();
+			ImGui::Text("Mouse Pos : (%.0f, %.0f)", mp.x, mp.y);
+			ImGui::Text("Mouse L/R/M : %d / %d / %d", input->IsPressMouse(0), input->IsPressMouse(1), input->IsPressMouse(2));
+			ImGui::Text("Wheel : %d", input->GetWheel());
+			ImGui::Text("Keys W/A/S/D : %d/%d/%d/%d", input->PushKey(DIK_W), input->PushKey(DIK_A), input->PushKey(DIK_S), input->PushKey(DIK_D));
+		}
+
+		if (ImGui::CollapsingHeader("このエンジンの主な機能（学習メモ）")) {
+			ImGui::TextWrapped("[このシーンで実演中]");
+			ImGui::BulletText("Camera / DebugCamera : 3Dカメラと F2 フリーカメラ");
+			ImGui::BulletText("Object3d + ModelManager : .obj/.gltf モデル描画とライティング");
+			ImGui::BulletText("Sprite + TextureManager : 2D 画像描画");
+			ImGui::BulletText("Audio : WAV の再生/停止/音量");
+			ImGui::BulletText("LineManager : グリッド・線・球のデバッグ描画");
+			ImGui::BulletText("ParticleManager : プリセット駆動のパーティクル");
+			ImGui::BulletText("Input : キー/マウス/パッド");
+			ImGui::Spacing();
+			ImGui::TextWrapped("[さらに用意されている機能（各クラス参照）]");
+			ImGui::BulletText("PostEffectManager : Bloom/Outline/Sepia/VHS 等の画面効果");
+			ImGui::BulletText("SkyBox : キューブマップ天球");
+			ImGui::BulletText("Animation / Animator : gltf スケルトンアニメ（AnimatedCube.gltf）");
+			ImGui::BulletText("SphSimulator : GPU パーティクル流体シミュ");
+			ImGui::BulletText("Collider / CollisionManager : 当たり判定");
+			ImGui::BulletText("BehaviorTree : AI のビヘイビアツリー");
+			ImGui::BulletText("Framework::SetBlendMode : 加算/減算などの合成切替");
+		}
+		ImGuiManager::GetInstance()->EndPanel();
 	}
 
-	if (ImGui::CollapsingHeader("入力の状態 (Input)")) {
-		Input* input = Input::GetInstance();
-		const Math::Vector2& mp = input->GetMousePosition();
-		ImGui::Text("Mouse Pos : (%.0f, %.0f)", mp.x, mp.y);
-		ImGui::Text("Mouse L/R/M : %d / %d / %d", input->IsPressMouse(0), input->IsPressMouse(1), input->IsPressMouse(2));
-		ImGui::Text("Wheel : %d", input->GetWheel());
-		ImGui::Text("Keys W/A/S/D : %d/%d/%d/%d", input->PushKey(DIK_W), input->PushKey(DIK_A), input->PushKey(DIK_S), input->PushKey(DIK_D));
-	}
-
-	if (ImGui::CollapsingHeader("このエンジンの主な機能（学習メモ）")) {
-		ImGui::TextWrapped("[このシーンで実演中]");
-		ImGui::BulletText("Camera / DebugCamera : 3Dカメラと F2 フリーカメラ");
-		ImGui::BulletText("Object3d + ModelManager : .obj/.gltf モデル描画とライティング");
-		ImGui::BulletText("Sprite + TextureManager : 2D 画像描画");
-		ImGui::BulletText("Audio : WAV の再生/停止/音量");
-		ImGui::BulletText("LineManager : グリッド・線・球のデバッグ描画");
-		ImGui::BulletText("ParticleManager : プリセット駆動のパーティクル");
-		ImGui::BulletText("Input : キー/マウス/パッド");
-		ImGui::Spacing();
-		ImGui::TextWrapped("[さらに用意されている機能（各クラス参照）]");
-		ImGui::BulletText("PostEffectManager : Bloom/Outline/Sepia/VHS 等の画面効果");
-		ImGui::BulletText("SkyBox : キューブマップ天球");
-		ImGui::BulletText("Animation / Animator : gltf スケルトンアニメ（AnimatedCube.gltf）");
-		ImGui::BulletText("SphSimulator : GPU パーティクル流体シミュ");
-		ImGui::BulletText("Collider / CollisionManager : 当たり判定");
-		ImGui::BulletText("BehaviorTree : AI のビヘイビアツリー");
-		ImGui::BulletText("Framework::SetBlendMode : 加算/減算などの合成切替");
-	}
-
-	ImGui::End();
 #endif
 }
+
 
 // =============================================================================
 //  Finalize ── 後始末。再入場時に二重生成しないようパーティクルも片付ける。

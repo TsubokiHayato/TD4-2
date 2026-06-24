@@ -3,6 +3,8 @@
 #include "IScene.h"
 #include <memory>
 
+#include "RubikCube/RubikCube.h"
+
 // User1 の個人開発用シーン（サンドボックス）
 // ここに自分の処理を足していく（カメラだけ持った最小の雛形）。
  class OosakiScene : public IScene {
@@ -18,4 +20,6 @@
 
 private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
+
+	std::unique_ptr<RubikCube> rubikCube_ = nullptr;
 };

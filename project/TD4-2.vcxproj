@@ -118,6 +118,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="application\RubikCube\BaseRubikCubeState.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="application\Order.cpp" />
     <ClCompile Include="application\scene\Sample\SampleScene.cpp" />
@@ -130,6 +131,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="application\scene\User\SanoScene.cpp" />
     <ClCompile Include="application\scene\User\OosakiScene.cpp" />
     <ClCompile Include="application\scene\User\TuboScene.cpp" />
+    <ClCompile Include="application\RubikCube\RubikCube.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
@@ -144,6 +146,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="application\scene\User\SanoScene.h" />
     <ClInclude Include="application\scene\User\OosakiScene.h" />
     <ClInclude Include="application\scene\User\TuboScene.h" />
+    <ClInclude Include="application\RubikCube\BaseRubikCubeState.h" />
+    <ClInclude Include="application\RubikCube\RubikCube.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="EngineCore\EngineLib\EngineLib.vcxproj">

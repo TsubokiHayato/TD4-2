@@ -13,6 +13,8 @@
     <ClCompile Include="application\scene\User\SanoScene.cpp" />
     <ClCompile Include="application\scene\User\OosakiScene.cpp" />
     <ClCompile Include="application\scene\User\TuboScene.cpp" />
+    <ClCompile Include="application\RubikCube\RubikCube.cpp" />
+    <ClCompile Include="application\RubikCube\BaseRubikCubeState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
@@ -27,6 +29,8 @@
     <ClInclude Include="application\scene\User\SanoScene.h" />
     <ClInclude Include="application\scene\User\OosakiScene.h" />
     <ClInclude Include="application\scene\User\TuboScene.h" />
+    <ClInclude Include="application\RubikCube\RubikCube.h" />
+    <ClInclude Include="application\RubikCube\BaseRubikCubeState.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="application">

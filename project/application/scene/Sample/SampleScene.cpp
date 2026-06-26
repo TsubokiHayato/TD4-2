@@ -6,6 +6,7 @@
 #include "IParticleEmitter.h" // ParticlePreset 構造体
 #include "LineManager.h"      // デバッグ用ライン / グリッド / 球（シングルトン。Update/Draw はエンジンが自動）
 #include "ParticleManager.h"  // パーティクル（シングルトン。Update/Draw はシーンが駆動する）
+#include "TextManager.h"      // テキスト管理（シングルトン。Update/Draw はシーンが駆動する）
 
 #ifdef USE_IMGUI
 #include "externals/imgui/imgui.h"
@@ -94,6 +95,18 @@ void SampleScene::Initialize() {
 	if (IParticleEmitter* e = ParticleManager::GetInstance()->CreateEmitterByType("Default", preset)) {
 		particleName_ = e->GetName(); // 片付け用に名前を覚えておく
 	}
+
+	// ───────────────────────────────────────────────────────────
+	//  ⑥ テキスト ── TextManager（シングルトン）。
+	//     CreateText で生成したテキストはエンジン終了まで TextManager 側が所有する。
+	//     Update/Draw はシーンが駆動する（ParticleManager と同じ作法）。
+	// ───────────────────────────────────────────────────────────
+	TextManager::GetInstance()->GetOrCreateFontSized(TextManager::PresetFontNames::Best10, 32.0f);
+	TextManager::GetInstance()->CreateText(
+		TextManager::PresetFontNames::Best10 + "_32",
+		"TextManager Sample",
+		{40.0f, 220.0f}
+	);
 }
 
 // =============================================================================
@@ -135,6 +148,9 @@ void SampleScene::Update() {
 	// (6) パーティクル更新。dt（経過時間）とカメラを渡す。
 	//     ※ Particle は Line/Input と違い、エンジンが自動更新しない＝シーンが駆動する。
 	ParticleManager::GetInstance()->Update(1.0f / 60.0f, camera_.get());
+
+	// (7) TextManager 更新。Particle と同様にシーンが駆動する。
+	TextManager::GetInstance()->UpdateAll();
 }
 
 // 入力処理：WASD/QE で操作対象(axis_)を動かす。
@@ -163,6 +179,9 @@ void SampleScene::Object3DDraw() {
 
 void SampleScene::SpriteDraw() {
 	sprite_->Draw();
+
+	// TextManager が持つテキストの描画。Sprite と同じパイプライン状態で描く。
+	TextManager::GetInstance()->DrawAll();
 }
 
 void SampleScene::ParticleDraw() {
@@ -188,6 +207,7 @@ void SampleScene::ImGuiDraw() {
 	debugCamera_->DrawImGui();
 	LineManager::GetInstance()->DrawImGui();
 	ParticleManager::GetInstance()->DrawImGui(); // パーティクルの本格エディタ（生成/保存/プレビュー）
+	TextManager::GetInstance()->DrawImGui();     // テキストの本格エディタ（生成/JSONレイアウト保存読込）
 #endif
 }
 
@@ -323,4 +343,8 @@ void SampleScene::Finalize() {
 	if (!particleName_.empty()) {
 		ParticleManager::GetInstance()->Remove(particleName_);
 	}
+
+	// TextManager はシングルトンでシーンを越えて生存するため、
+	// このシーンで作ったテキストは退場時に必ず片付ける。
+	TextManager::GetInstance()->ClearAllTexts();
 }

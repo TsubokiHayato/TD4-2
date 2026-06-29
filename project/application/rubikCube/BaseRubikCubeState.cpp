@@ -80,8 +80,8 @@ void RotationYState::Rotation(SixCube& sixCube, const uint32_t& row) {
 
 	for (int i = 0; i < 4 - 1; i++) {
 		sixCube.oneCube[rotationRow_.num[i]].cube[row][0] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[row][0];
-		sixCube.oneCube[rotationRow_.num[i]].cube[row][1] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[row][0];
-		sixCube.oneCube[rotationRow_.num[i]].cube[row][2] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[row][0];
+		sixCube.oneCube[rotationRow_.num[i]].cube[row][1] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[row][1];
+		sixCube.oneCube[rotationRow_.num[i]].cube[row][2] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[row][2];
 	}
 
 	sixCube.oneCube[rotationRow_.num[3]].cube[row][0] = (uint32_t)prevCube.x;
@@ -90,7 +90,7 @@ void RotationYState::Rotation(SixCube& sixCube, const uint32_t& row) {
 
 
 
-	RotationAround(sixCube, row, kUpAround_, kDownAround_);
+	RotationAround(sixCube, row, kDownAround_, kUpAround_);
 }
 
 

@@ -20,6 +20,7 @@
 
 private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
+	TuboEngine::Transform transform_;
 
 	std::unique_ptr<RubikCube> rubikCube_ = nullptr;
 };

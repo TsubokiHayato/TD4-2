@@ -57,7 +57,7 @@ protected:
 /// <summary>
 /// 
 /// </summary>
-class RotationXState : public BaseRubikCubeState {
+class RotationZState : public BaseRubikCubeState {
 public:
 	/// <summary>
 	/// 回転
@@ -87,7 +87,7 @@ private:
 /// <summary>
 /// 
 /// </summary>
-class RotationZState : public BaseRubikCubeState {
+class RotationXState : public BaseRubikCubeState {
 public:
 	/// <summary>
 	/// 回転

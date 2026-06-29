@@ -47,9 +47,10 @@ void BaseRubikCubeState::RightRotate(SixCube& sixCube, const uint32_t& around) {
 
 void RotationXState::Rotation(SixCube& sixCube, const uint32_t& row) {
 	rotationRow_.num[0] = 1 + matrixNum;
-	rotationRow_.num[1] = 3 + matrixNum;
+	rotationRow_.num[1] = 2 + matrixNum;
 	rotationRow_.num[2] = 5 + matrixNum;
-	rotationRow_.num[3] = 6 + matrixNum;
+	rotationRow_.num[3] = 4 + matrixNum;
+
 
 	TuboEngine::Math::Vector3 prevCube = { (float)sixCube.oneCube[rotationRow_.num[0]].cube[0][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[1][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[2][row] };
 
@@ -63,9 +64,7 @@ void RotationXState::Rotation(SixCube& sixCube, const uint32_t& row) {
 	sixCube.oneCube[rotationRow_.num[3]].cube[1][row] = (uint32_t)prevCube.y;
 	sixCube.oneCube[rotationRow_.num[3]].cube[2][row] = (uint32_t)prevCube.z;
 
-
-	RotationAround(sixCube,row,kLeftAround_, kRightAround_);
-
+	RotationAround(sixCube, row, kFarAround_, kNearAround_);
 }
 
 
@@ -95,25 +94,53 @@ void RotationYState::Rotation(SixCube& sixCube, const uint32_t& row) {
 
 
 void RotationZState::Rotation(SixCube& sixCube, const uint32_t& row) {
-	rotationRow_.num[0] = 1 + matrixNum;
-	rotationRow_.num[1] = 2 + matrixNum;
-	rotationRow_.num[2] = 5 + matrixNum;
-	rotationRow_.num[3] = 4 + matrixNum;
 
 
-	TuboEngine::Math::Vector3 prevCube = { (float)sixCube.oneCube[rotationRow_.num[0]].cube[0][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[1][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[2][row] };
 
-	for (int i = 0; i < 4 - 1; i++) {
-		sixCube.oneCube[rotationRow_.num[i]].cube[0][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[0][row];
-		sixCube.oneCube[rotationRow_.num[i]].cube[1][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[1][row];
-		sixCube.oneCube[rotationRow_.num[i]].cube[2][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[2][row];
-	}
+
+
+
+
+
+
+
+
+
+	rotationRow_.num[0] = 1 + matrixNum;//[row][]
+	rotationRow_.num[1] = 3 + matrixNum;//[][row]
+	rotationRow_.num[2] = 5 + matrixNum;//[row][]
+	rotationRow_.num[3] = 6 + matrixNum;//[][row]
+
+	TuboEngine::Math::Vector3 prevCube = { (float)sixCube.oneCube[rotationRow_.num[0]].cube[row][0],(float)sixCube.oneCube[rotationRow_.num[0]].cube[row][1],(float)sixCube.oneCube[rotationRow_.num[0]].cube[row][2] };
+
+
+	sixCube.oneCube[rotationRow_.num[0]].cube[row][0] = sixCube.oneCube[rotationRow_.num[1]].cube[0][row];
+	sixCube.oneCube[rotationRow_.num[0]].cube[row][1] = sixCube.oneCube[rotationRow_.num[1]].cube[1][row];
+	sixCube.oneCube[rotationRow_.num[0]].cube[row][2] = sixCube.oneCube[rotationRow_.num[1]].cube[2][row];
+
+	sixCube.oneCube[rotationRow_.num[1]].cube[0][row] = sixCube.oneCube[rotationRow_.num[2]].cube[row][0];
+	sixCube.oneCube[rotationRow_.num[1]].cube[1][row] = sixCube.oneCube[rotationRow_.num[2]].cube[row][1];
+	sixCube.oneCube[rotationRow_.num[1]].cube[2][row] = sixCube.oneCube[rotationRow_.num[2]].cube[row][2];
+
+	sixCube.oneCube[rotationRow_.num[2]].cube[row][0] = sixCube.oneCube[rotationRow_.num[3]].cube[0][row];
+	sixCube.oneCube[rotationRow_.num[2]].cube[row][1] = sixCube.oneCube[rotationRow_.num[3]].cube[1][row];
+	sixCube.oneCube[rotationRow_.num[2]].cube[row][2] = sixCube.oneCube[rotationRow_.num[3]].cube[2][row];
 
 	sixCube.oneCube[rotationRow_.num[3]].cube[0][row] = (uint32_t)prevCube.x;
 	sixCube.oneCube[rotationRow_.num[3]].cube[1][row] = (uint32_t)prevCube.y;
 	sixCube.oneCube[rotationRow_.num[3]].cube[2][row] = (uint32_t)prevCube.z;
 
 
+	//for (int i = 0; i < 4 - 1; i++) {
+	//	sixCube.oneCube[rotationRow_.num[i]].cube[0][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[0][row];
+	//	sixCube.oneCube[rotationRow_.num[i]].cube[1][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[1][row];
+	//	sixCube.oneCube[rotationRow_.num[i]].cube[2][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[2][row];
+	//}
 
-	RotationAround(sixCube, row, kNearAround_, kFarAround_);
+	//sixCube.oneCube[rotationRow_.num[3]].cube[0][row] = (uint32_t)prevCube.x;
+	//sixCube.oneCube[rotationRow_.num[3]].cube[1][row] = (uint32_t)prevCube.y;
+	//sixCube.oneCube[rotationRow_.num[3]].cube[2][row] = (uint32_t)prevCube.z;
+
+
+	RotationAround(sixCube, row, kLeftAround_, kRightAround_);
 }

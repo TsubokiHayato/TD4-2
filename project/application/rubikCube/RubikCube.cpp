@@ -38,14 +38,13 @@ void RubikCube::Initialize(TuboEngine::Camera* camera) {
 		sixCube_.oneCube[i].cube[2][2] = 0;
 	}
 
-	sixCube_.oneCube[0].cube[1][1] = 1;
-
-
 	sixCube_.oneCube[1].cube[0][0] = 1;
-	sixCube_.oneCube[1].cube[0][1] = 1;
+	sixCube_.oneCube[2].cube[0][1] = 1;
+	sixCube_.oneCube[3].cube[0][2] = 1;
+	sixCube_.oneCube[4].cube[1][0] = 1;
+	sixCube_.oneCube[5].cube[1][2] = 1;
+	sixCube_.oneCube[0].cube[2][1] = 1;
 
-	sixCube_.oneCube[1].cube[2][1] = 1;
-	sixCube_.oneCube[1].cube[2][2] = 1;
 
 
 
@@ -104,13 +103,11 @@ void RubikCube::Update() {
 	}
 
 
-
-
 	tips_.clear();
 	//マス目の設定
 	for (int i = 0; i < 6; i++) {
-			for (int y = -1; y <= 1; y++) {
-				for (int x = -1; x <= 1; x++) {
+		for (int y = -1; y <= 1; y++) {
+			for (int x = -1; x <= 1; x++) {
 				if (sixCube_.oneCube[i].cube[1 + y][1 + x] >= 1) {
 					std::unique_ptr<TuboEngine::Object3d> object = std::make_unique<TuboEngine::Object3d>();
 					object->Initialize("tip/tip.obj");
@@ -141,7 +138,7 @@ void RubikCube::Update() {
 						object->SetRotation({ 0,0,90.0f * (float(M_PI) / 180.0f) });//奥
 					}
 
-					object->SetScale({ 0.5f,0.5f,0.5f });
+					object->SetScale({ 0.5f ,0.5f ,0.5f });
 					tips_.push_back(std::move(object));
 				}
 			}

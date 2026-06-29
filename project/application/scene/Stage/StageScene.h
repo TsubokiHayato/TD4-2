@@ -1,6 +1,9 @@
 #pragma once
 #include "IScene.h"
 #include "Camera.h"
+#include "Object3d.h"   
+#include  "Ui.h"
+
 #include <memory>
 
 // ゲーム本編（ステージ）
@@ -18,4 +21,5 @@ public:
 
 private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
+	std::unique_ptr<Ui>ui_;//UIクラス
 };

@@ -38,15 +38,19 @@ void RubikCube::Initialize(TuboEngine::Camera* camera) {
 		sixCube_.oneCube[i].cube[2][2] = 0;
 	}
 
+
+	sixCube_.oneCube[0].cube[0][1] = 1;
+	sixCube_.oneCube[0].cube[1][1] = 1;
+	sixCube_.oneCube[0].cube[2][1] = 1;
+
+
 	sixCube_.oneCube[2].cube[0][1] = 1;
+	sixCube_.oneCube[2].cube[1][1] = 1;
+	sixCube_.oneCube[2].cube[2][1] = 0;
 
-	sixCube_.oneCube[2].cube[2][2] = 1;
-
-	sixCube_.oneCube[3].cube[0][0] = 1;
-	sixCube_.oneCube[3].cube[0][1] = 1;
-	sixCube_.oneCube[3].cube[0][2] = 1;
-
-
+	sixCube_.oneCube[5].cube[0][1] = 1;
+	sixCube_.oneCube[5].cube[1][1] = 1;
+	sixCube_.oneCube[5].cube[2][1] = 0;
 
 
 	///イメージ
@@ -68,7 +72,7 @@ void RubikCube::Update() {
 
 	//向きを変更するのは全9方向
 
-	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_E)) {
+	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_R)) {
 		rubikCubeState_.reset();
 
 		if (rotateDirectionNum_ == 0) {
@@ -86,8 +90,16 @@ void RubikCube::Update() {
 		}
 	}
 
+	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_E)) {
+		rotation_ = 1;
+	}
+	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_Q)) {
+   		rotation_ = 0;
+	}
+
+
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_SPACE)) {
-		rubikCubeState_->Rotation(sixCube_, row_);
+		rubikCubeState_->Rotation(sixCube_, row_,rotation_);
 	}
 
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_A)) {

@@ -44,6 +44,10 @@ private:
 
 	std::vector<std::unique_ptr<TuboEngine::Object3d>> tips_;//先端たち
 
+	//回転方向
+	int rotation_ = 0;
+
+
 
 	TuboEngine::Camera* camera_;
 };

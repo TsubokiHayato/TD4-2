@@ -18,7 +18,10 @@ public:
 	/// <summary>
 	/// 回転
 	/// </summary>
-	virtual void Rotation(SixCube& sixCube, const uint32_t& row) = 0;
+	/// <param name="sixCube">ルービックキューブ六面</param>
+	/// <param name="row">回転列</param>
+	/// <param name="rotation">回す方向</param>
+	virtual void Rotation(SixCube& sixCube, const uint32_t& row,int rotation) = 0;
 
 
 protected:
@@ -26,7 +29,7 @@ protected:
 	/// <summary>
 	/// 回転により面自体が回転
 	/// </summary>
-	void RotationAround(SixCube& sixCube, const uint32_t& row, const uint32_t& aroundA, const uint32_t& aroundB);
+	void RotationAround(SixCube& sixCube, const uint32_t& row, int rotation, const uint32_t& aroundA, const uint32_t& aroundB);
 
 	/// <summary>
 	/// 左回り
@@ -62,7 +65,10 @@ public:
 	/// <summary>
 	/// 回転
 	/// </summary>
-	void Rotation(SixCube& sixCube, const uint32_t& row) override;
+	/// <param name="sixCube">ルービックキューブ六面</param>
+	/// <param name="row">回転列</param>
+	/// <param name="rotation">回す方向</param>
+	void Rotation(SixCube& sixCube, const uint32_t& row, int rotation) override;
 
 private:
 	const uint32_t kLeftAround_ = 2 + matrixNum;
@@ -77,7 +83,10 @@ public:
 	/// <summary>
 	/// 回転
 	/// </summary>
-	void Rotation(SixCube& sixCube, const uint32_t& row) override;
+	/// <param name="sixCube">ルービックキューブ六面</param>
+	/// <param name="row">回転列</param>
+	/// <param name="rotation">回す方向</param>
+	void Rotation(SixCube& sixCube, const uint32_t& row, int rotation) override;
 
 private:
 	const uint32_t kUpAround_ = 1 + matrixNum;
@@ -92,7 +101,10 @@ public:
 	/// <summary>
 	/// 回転
 	/// </summary>
-	void Rotation(SixCube& sixCube, const uint32_t& row) override;
+	/// <param name="sixCube">ルービックキューブ六面</param>
+	/// <param name="row">回転列</param>
+	/// <param name="rotation">回す方向</param>
+	void Rotation(SixCube& sixCube, const uint32_t& row, int rotation) override;
 
 private:
 	const uint32_t kNearAround_ = 3 + matrixNum;

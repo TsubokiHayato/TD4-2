@@ -80,7 +80,7 @@ void TitleScene::DecideSelection() {
 		SceneManager::GetInstance()->ChangeScene(STAGE); // 次フレームでゲーム本編へ
 		break;
 	case kMenuOption:
-		// TODO: 設定シーンは未実装。専用シーンを SCENE enum に足したらここで ChangeScene する。
+		SceneManager::GetInstance()->ChangeScene(OPTION); // 設定画面へ
 		break;
 	case kMenuExit:
 		PostQuitMessage(0); // アプリ終了（WM_QUIT）

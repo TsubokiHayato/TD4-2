@@ -3,10 +3,14 @@
 #include "SceneManager.h"
 #include "SceneRegistration.h"
 #include "GameScenes.h"
+#include "settings/Settings.h"
 
 void TuboEngine::Order::Initialize() {
 	// エンジン基盤の初期化（シーンには触れない）
 	TuboEngine::Framework::Initialize();
+
+	// 保存済みの設定を読み込む（未保存なら既定値のまま）
+	Settings::GetInstance()->Load();
 
 	// ゲームのシーンを登録してから開始シーンを指定（登録は Initialize より前）
 	RegisterGameScenes();

@@ -14,6 +14,9 @@
     <ClCompile Include="application\scene\User\OosakiScene.cpp" />
     <ClCompile Include="application\scene\User\TuboScene.cpp" />
     <ClCompile Include="Ui.cpp" />
+    <ClCompile Include="application\scene\Option\OptionScene.cpp" />
+    <ClCompile Include="application\settings\Settings.cpp" />
+    <ClCompile Include="application\audio\AudioManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
@@ -29,6 +32,9 @@
     <ClInclude Include="application\scene\User\OosakiScene.h" />
     <ClInclude Include="application\scene\User\TuboScene.h" />
     <ClInclude Include="Ui.h" />
+    <ClInclude Include="application\scene\Option\OptionScene.h" />
+    <ClInclude Include="application\settings\Settings.h" />
+    <ClInclude Include="application\audio\AudioManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="application">

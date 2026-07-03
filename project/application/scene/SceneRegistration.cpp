@@ -11,6 +11,7 @@
 #include"User/OosakiScene.h"
 #include"User/SanoScene.h"
 #include"User/TuboScene.h"
+#include"Option/OptionScene.h"
 
 #include <memory>
 
@@ -26,4 +27,5 @@ void RegisterGameScenes() {
 	sm->RegisterScene(Oosaki, [] { return std::make_unique<OosakiScene>(); }, "Oosaki");
 	sm->RegisterScene(Sano, [] { return std::make_unique<SanoScene>(); }, "Sano");
 	sm->RegisterScene(Tubo, [] { return std::make_unique<TuboScene>(); }, "Tubo");
+	sm->RegisterScene(OPTION, [] { return std::make_unique<OptionScene>(); }, "Option");
 }

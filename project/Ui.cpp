@@ -17,23 +17,31 @@ void Ui::Initialize() {
 	retrySprite_ = std::make_unique<TuboEngine::Sprite>();
 	retrySprite_->Initialize("particle.png");
 	retrySprite_->SetAnchorPoint({ 0.5f,0.5f });
+	retrySprite_->SetPosition(center_);
+	retrySprite_->SetSize({ 0,0 });
 	//タイトルへスプライトの初期化
 	toTitleSprite_ = std::make_unique<TuboEngine::Sprite>();
 	toTitleSprite_->Initialize("yellow.png");
 	toTitleSprite_->SetAnchorPoint({ 0.5f,0.5f });
+	toTitleSprite_->SetPosition(center_);
+	toTitleSprite_->SetSize({ 0,0 });
 	//セレクトへスプライトの初期化
 	toSelectSprite_ = std::make_unique<TuboEngine::Sprite>();
 	toSelectSprite_->Initialize("tile.png");
 	toSelectSprite_->SetAnchorPoint({ 0.5f,0.5f });
+	toSelectSprite_->SetPosition(center_);
+	toSelectSprite_->SetSize({ 0,0 });
 	//操作説明メニュースプライトの初期化
 	controlsMenuSprite_ = std::make_unique<TuboEngine::Sprite>();
 	controlsMenuSprite_->Initialize("noise0.png");
 	controlsMenuSprite_->SetAnchorPoint({ 0.5f,0.5f });
+	controlsMenuSprite_->SetPosition(center_);
+	controlsMenuSprite_->SetSize({ 0,0 });
 	//操作説明画面スプライトの初期化
 	controlsDetailSprite_ = std::make_unique<TuboEngine::Sprite>();
 	controlsDetailSprite_->Initialize("noise1.png");
 	controlsDetailSprite_->SetAnchorPoint({ 0.5f,0.5f });
-
+	
 }
 //更新
 void Ui::Update() {
@@ -48,17 +56,45 @@ void Ui::Update() {
 	toSelectSprite_->Update();
 	controlsMenuSprite_->Update();
 	controlsDetailSprite_->Update();
+
+	if (isRotating_) {
+
+		rotateTimer_ += rotateSpeed_;
+
+		if (rotateTimer_ >= 1.0f) {
+
+			rotateTimer_ = 1.0f;
+			isRotating_ = false;
+
+			pauseSelectIndex_ =
+				(pauseSelectIndex_ + rotateDir_ + 4) % 4;
+		}
+	}
 }
 //ステージシーンの描画
 void Ui::DrawStageScene() {
-	//ポーズスプライトの描画
 	if (pauseScale_ > 0.01f) {
-		pauseSprite_->Draw();
-		retrySprite_->Draw();
-		toTitleSprite_->Draw();
-		toSelectSprite_->Draw();
-		controlsMenuSprite_->Draw();
+
+		switch (pauseSelectIndex_) {
+
+		case 0://操作説明
+			controlsMenuSprite_->Draw();
+			break;
+
+		case 1://リトライ
+			retrySprite_->Draw();
+			break;
+
+		case 2://セレクトへ
+			toSelectSprite_->Draw();
+			break;
+
+		case 3://タイトルへ
+			toTitleSprite_->Draw();
+			break;
+		}
 	}
+	//操作説明画面の描画
 	if (pauseMenutype_ == PauseMenuType::Options && !isShowPause_) {
 		controlsDetailSprite_->Draw();
 	}
@@ -91,19 +127,22 @@ void Ui::UpdatePauseMenu() {
 		if (pauseSelectIndex_ < 0 || pauseSelectIndex_ > 3) {
 			assert(false);
 		}
+		if (!isRotating_) {
 		//ポーズメニューの選択
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_UP)) {
-			pauseSelectIndex_--;
-			if (pauseSelectIndex_ < 0) {
-				pauseSelectIndex_ = 3;
-			}
+		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_LEFT)) {
+
+			rotateDir_ = -1;
+			rotateTimer_ = 0.0f;
+			isRotating_ = true;
 		}
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_DOWN)) {
-			pauseSelectIndex_++;
-			if (pauseSelectIndex_ > 3) {
-				pauseSelectIndex_ = 0;
-			}
+
+		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RIGHT)) {
+
+			rotateDir_ = 1;
+			rotateTimer_ = 0.0f;
+			isRotating_ = true;
 		}
+	}
 		//ポーズメニューの決定
 		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_SPACE)) {
 			switch (pauseSelectIndex_) {
@@ -120,14 +159,13 @@ void Ui::UpdatePauseMenu() {
 				break;
 			case 3:
 				pauseMenutype_ = PauseMenuType::ToTitle;//タイトルへ
+
 				break;
 			}
 		}
 	}
 	//選択アニメーションタイマー更新
 	pauseSelectAnimTimer_ += 1.0f / 60.0f;
-
-	float selectScale = 1.0f + sinf(pauseSelectAnimTimer_ * 5.0f) * 0.08f;//選択アニメーションのスケール
 
 	if (isShowPause_) {
 		pauseScale_ += pauseAnimSpeed_;
@@ -143,54 +181,111 @@ void Ui::UpdatePauseMenu() {
 	} else {
 		eased = 1.0f - std::pow(-2.0f * pauseScale_ + 2.0f, 2.0f) / 2.0f;
 	}
-
+	
 	float baseW = pauseSize_.x;//ポーズメニューの幅
 	float baseH = pauseSize_.y;//ポーズメニューの高さ
+
+	float selectScale = 1.0f + sinf(pauseSelectAnimTimer_ * 5.0f) * 0.08f;
+
+	Vector2 frontPos = center_;
+	Vector2 rightPos = { center_.x + 260.0f, center_.y };
+	Vector2 leftPos = { center_.x - 260.0f, center_.y };
+	Vector2 backPos = { center_.x, center_.y - 120.0f };
+
+	const float frontScale = 1.0f;
+	const float sideScale = 0.75f;
+	const float backScale = 0.6f;
 
 	pauseSprite_->SetPosition(pausePos_);//ポーズメニューの位置を設定
 	controlsDetailSprite_->SetPosition(controlsDetailPos_);
 	pauseSprite_->SetSize({ baseW * eased, baseH * eased });//ポーズメニューのサイズを設定
-	retrySprite_->SetSize({ retryBaseSize_.x * eased,retryBaseSize_.y * eased });//リトライボタンのサイズを設定
-	toTitleSprite_->SetSize({ titleBaseSize_.x * eased,titleBaseSize_.y * eased });//タイトルへボタンのサイズを設定
-	toSelectSprite_->SetSize({ selectBaseSize_.x * eased,selectBaseSize_.y * eased });//セレクトへボタンのサイズを設定
-	controlsMenuSprite_->SetSize({ controlsMenuBaseSize_.x * eased,controlsMenuBaseSize_.y * eased });//操作説明メニューのサイズを設定
+
 	controlsDetailSprite_->SetSize(controlsDetailBaseSize_);
 
-	//選択中のボタンのサイズを設定
-	switch (pauseSelectIndex_) {
+	TuboEngine::Sprite* sprite = nullptr;
+	Vector2 size;
 
-	case 0://操作説明メニュー
-		controlsMenuSprite_->SetSize({ controlsMenuBaseSize_.x * eased * selectScale,
-									controlsMenuBaseSize_.y * eased * selectScale });
+	switch (pauseSelectIndex_) {
+	case 0:
+		sprite = controlsMenuSprite_.get();
+		size = controlsMenuBaseSize_;
 		break;
-	case 1://リトライボタン
-		retrySprite_->SetSize({ retryBaseSize_.x * eased * selectScale,
-								retryBaseSize_.y * eased * selectScale });
+	case 1:
+		sprite = retrySprite_.get();
+		size = retryBaseSize_;
 		break;
-	case 2://セレクトへボタン
-		toSelectSprite_->SetSize({ selectBaseSize_.x * eased * selectScale,
-								selectBaseSize_.y * eased * selectScale });
+	case 2:
+		sprite = toSelectSprite_.get();
+		size = selectBaseSize_;
 		break;
-	case 3://タイトルへボタン
-		toTitleSprite_->SetSize({ titleBaseSize_.x * eased * selectScale,
-								titleBaseSize_.y * eased * selectScale });
+	case 3:
+		sprite = toTitleSprite_.get();
+		size = titleBaseSize_;
 		break;
 	}
-	
-	//操作説明メニューの位置を設定
-	controlsMenuSprite_->SetPosition({ (1.0f - eased) * center_.x + eased * controlsMenuPos_.x,
-										(1.0f - eased) * center_.y + eased * controlsMenuPos_.y });
-	//リトライボタンの位置を設定
-	retrySprite_->SetPosition({ (1.0f - eased) * center_.x + eased * retryPos_.x,
-								(1.0f - eased) * center_.y + eased * retryPos_.y });
-	//タイトルへボタンの位置を設定
-	toTitleSprite_->SetPosition({ (1.0f - eased) * center_.x + eased * totitlePos_.x,
-								 (1.0f - eased) * center_.y + eased * totitlePos_.y, });
-	//セレクトへボタンの位置を設定
-	toSelectSprite_->SetPosition({ (1.0f - eased) * center_.x + eased * toSelectPos_.x,
-									(1.0f - eased) * center_.y + eased * toSelectPos_.y });
-}
 
+	Vector2 drawPos = center_;
+	float drawScale = eased * selectScale;
+	float widthScale = 1.0f;
+
+	if (isRotating_) {
+
+		float t = rotateTimer_;
+
+		// イージング
+		if (t < 0.5f) {
+			t = 2.0f * t * t;
+		} else {
+			t = 1.0f - std::pow(-2.0f * t + 2.0f, 2.0f) / 2.0f;
+		}
+
+		if (rotateDir_ == 1) {
+
+			// 右キー
+			if (t < 0.5f) {
+
+				float local = t / 0.5f;
+
+				drawPos.x = center_.x - 120.0f * local;
+				widthScale = 1.0f - local;
+			} else {
+
+				float local = (t - 0.5f) / 0.5f;
+
+				drawPos.x = center_.x + 120.0f * (1.0f - local);
+				widthScale = local;
+			}
+		} else {
+
+			// 左キー
+			if (t < 0.5f) {
+
+				float local = t / 0.5f;
+
+				drawPos.x = center_.x + 120.0f * local;
+				widthScale = 1.0f - local;
+			} else {
+
+				float local = (t - 0.5f) / 0.5f;
+
+				drawPos.x = center_.x - 120.0f * (1.0f - local);
+				widthScale = local;
+			}
+		}
+	}
+
+	sprite->SetPosition(drawPos);
+
+	sprite->SetSize({
+		size.x * drawScale * widthScale,
+		size.y * drawScale
+		});
+
+}
+//ポーズメニューの取得
+Ui::PauseMenuType Ui::GetPauseMenu() {
+	return pauseMenutype_;
+}
 //デバック
 void Ui::Debug() {
 #ifdef USE_IMGUI

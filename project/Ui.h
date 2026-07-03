@@ -26,6 +26,17 @@ public:
 	void Debug();
 	//ポーズメニューの取得
 	PauseMenuType GetPauseMenu();
+	//ポーズメニューの表示状態の取得
+	bool IsRotating(){ return isRotating_; }
+	//ポーズメニューが開いているか
+	bool IsPauseVisible()  {return isShowPause_;}
+	//回転方向の取得
+	int GetRotateDir() { return rotateDir_; }
+	//回転タイマーの取得
+	float GetRotateTimer() { return rotateTimer_; }
+	//ポーズのスケール取得
+	float GetPauseScale() { return pauseScale_; }
+
 	//ポーズメニューの設定
 	void SetPauseMenu(PauseMenuType type) { pauseMenutype_ = type; }
 private:
@@ -57,11 +68,15 @@ private:
 	Vector2 controlsDetailPos_ = { 640.0f,360.0f };//操作説明画面の座標
 
 	int pauseSelectIndex_ = 0;//ポーズメニューの選択インデックス
+	int rotateDir_ = 0;
 
 	float pauseSelectAnimTimer_ = 0.0f;//ポーズメニューの選択アニメーションタイマー
 	float pauseScale_ = 0.0f;//ポーズメニューのスケール
+	float rotateTimer_ = 0.0f;
 
 	bool isShowPause_ = false;//ポーズメニュー表示フラグ
+	bool isRotating_ = false;
 
 	const float pauseAnimSpeed_ = 0.05f;//ポーズメニューのアニメーション速度
+	const float rotateSpeed_ = 0.08f;
 };

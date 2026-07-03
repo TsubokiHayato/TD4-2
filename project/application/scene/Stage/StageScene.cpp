@@ -45,6 +45,7 @@ void StageScene::Update() {
 		cubeBaseScale_ * cubeScale_
 		});
 
+
 	//ポーズメニューでのシーン切り替え
 	ChangeSceneFromPause();
 

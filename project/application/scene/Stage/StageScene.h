@@ -31,8 +31,8 @@ private:
 	const float PI = 3.1415926f;
 	const float DEG90 = PI / 2.0f;
 
+	float cubeBaseScale_ = 1.5f;
 	float cubeScale_ = 0.0f;
-	float cubeAngle_ = 0.0f;
 	float basecubeAngle_ = 0.0f;
 	bool prevRotating_ = false;
 };

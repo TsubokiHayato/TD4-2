@@ -38,6 +38,13 @@ void StageScene::Update() {
 
 	//ポーズメニューのスケールを取得
 	cubeScale_ = ui_->GetPauseScale();
+
+	pauseMenuCube_->SetScale({
+		cubeBaseScale_ * cubeScale_,
+		cubeBaseScale_ * cubeScale_,
+		cubeBaseScale_ * cubeScale_
+		});
+
 	//ポーズメニューでのシーン切り替え
 	ChangeSceneFromPause();
 
@@ -49,13 +56,7 @@ void StageScene::Finalize() {}
 void StageScene::Object3DDraw() {
 
 	//ポーズメニューキューブの描画
-	if (ui_->IsPauseVisible()) {//ポーズメニューが開かれてるとき
-
-		pauseMenuCube_->SetScale({
-			cubeScale_,
-			cubeScale_,
-			cubeScale_
-			});
+	if (cubeScale_ > 0.01f) {
 
 		pauseMenuCube_->Draw();
 	}

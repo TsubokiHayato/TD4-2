@@ -192,9 +192,9 @@ void Ui::UpdatePauseMenu() {
 	Vector2 leftPos = { center_.x - 260.0f, center_.y };
 	Vector2 backPos = { center_.x, center_.y - 120.0f };
 
-	const float frontScale = 1.0f;
-	const float sideScale = 0.75f;
-	const float backScale = 0.6f;
+	const float frontScale = 1.0f;//正面のスケール
+	const float sideScale = 0.75f;//左右のスケール
+	const float backScale = 0.6f;//後ろのスケール
 
 	pauseSprite_->SetPosition(pausePos_);//ポーズメニューの位置を設定
 	controlsDetailSprite_->SetPosition(controlsDetailPos_);
@@ -204,7 +204,7 @@ void Ui::UpdatePauseMenu() {
 
 	TuboEngine::Sprite* sprite = nullptr;
 	Vector2 size;
-
+	//選択中のスプライトとサイズを設定
 	switch (pauseSelectIndex_) {
 	case 0:
 		sprite = controlsMenuSprite_.get();
@@ -224,10 +224,10 @@ void Ui::UpdatePauseMenu() {
 		break;
 	}
 
-	Vector2 drawPos = center_;
-	float drawScale = eased * selectScale;
-	float widthScale = 1.0f;
-
+	Vector2 drawPos = center_;//描画位置
+	float drawScale = eased * selectScale;//描画スケール
+	float widthScale = 1.0f;//描画幅スケール
+	// 回転中の処理
 	if (isRotating_) {
 
 		float t = rotateTimer_;
@@ -238,10 +238,10 @@ void Ui::UpdatePauseMenu() {
 		} else {
 			t = 1.0f - std::pow(-2.0f * t + 2.0f, 2.0f) / 2.0f;
 		}
-
+		//右回転の時
 		if (rotateDir_ == 1) {
 
-			// 右キー
+			
 			if (t < 0.5f) {
 
 				float local = t / 0.5f;
@@ -255,9 +255,8 @@ void Ui::UpdatePauseMenu() {
 				drawPos.x = center_.x + 120.0f * (1.0f - local);
 				widthScale = local;
 			}
-		} else {
+		} else {//左回転の時
 
-			// 左キー
 			if (t < 0.5f) {
 
 				float local = t / 0.5f;
@@ -273,9 +272,9 @@ void Ui::UpdatePauseMenu() {
 			}
 		}
 	}
-
+	//スプライトの位置を設定
 	sprite->SetPosition(drawPos);
-
+	//スプライトのサイズを設定
 	sprite->SetSize({
 		size.x * drawScale * widthScale,
 		size.y * drawScale

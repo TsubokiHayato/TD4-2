@@ -16,8 +16,8 @@ void BaseRubikCubeState::RotationAround(SixCube& sixCube, const uint32_t& row, c
 	}
 	else if(row == 2){
 
-		//LeftRotate(sixCube, aroundB);
-		RightRotate(sixCube, aroundB);
+		LeftRotate(sixCube, aroundB);
+		//RightRotate(sixCube, aroundB);
 	}
 }
 
@@ -47,24 +47,40 @@ void BaseRubikCubeState::RightRotate(SixCube& sixCube, const uint32_t& around) {
 
 void RotationXState::Rotation(SixCube& sixCube, const uint32_t& row) {
 	rotationRow_.num[0] = 1 + matrixNum;
-	rotationRow_.num[1] = 2 + matrixNum;
+	rotationRow_.num[1] = 3 + matrixNum;
 	rotationRow_.num[2] = 5 + matrixNum;
-	rotationRow_.num[3] = 4 + matrixNum;
+	rotationRow_.num[3] = 6 + matrixNum;
 
+
+	int reverce = 0;
+
+	if (row == 0) {
+		reverce += 2;
+	}
+	else if (row == 2) {
+		reverce -= 2;
+	}
 
 	TuboEngine::Math::Vector3 prevCube = { (float)sixCube.oneCube[rotationRow_.num[0]].cube[0][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[1][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[2][row] };
 
-	for (int i = 0; i < 4 - 1; i++) {
-		sixCube.oneCube[rotationRow_.num[i]].cube[0][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[0][row];
-		sixCube.oneCube[rotationRow_.num[i]].cube[1][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[1][row];
-		sixCube.oneCube[rotationRow_.num[i]].cube[2][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[2][row];
-	}
+	sixCube.oneCube[rotationRow_.num[0]].cube[0][row] = sixCube.oneCube[rotationRow_.num[1]].cube[0][row];
+	sixCube.oneCube[rotationRow_.num[0]].cube[1][row] = sixCube.oneCube[rotationRow_.num[1]].cube[1][row];
+	sixCube.oneCube[rotationRow_.num[0]].cube[2][row] = sixCube.oneCube[rotationRow_.num[1]].cube[2][row];
 
-	sixCube.oneCube[rotationRow_.num[3]].cube[0][row] = (uint32_t)prevCube.x;
-	sixCube.oneCube[rotationRow_.num[3]].cube[1][row] = (uint32_t)prevCube.y;
-	sixCube.oneCube[rotationRow_.num[3]].cube[2][row] = (uint32_t)prevCube.z;
+	sixCube.oneCube[rotationRow_.num[1]].cube[0][row] = sixCube.oneCube[rotationRow_.num[2]].cube[0][row];
+	sixCube.oneCube[rotationRow_.num[1]].cube[1][row] = sixCube.oneCube[rotationRow_.num[2]].cube[1][row];
+	sixCube.oneCube[rotationRow_.num[1]].cube[2][row] = sixCube.oneCube[rotationRow_.num[2]].cube[2][row];
 
-	RotationAround(sixCube, row, kFarAround_, kNearAround_);
+	sixCube.oneCube[rotationRow_.num[2]].cube[0][row] = sixCube.oneCube[rotationRow_.num[3]].cube[0][row + reverce];
+	sixCube.oneCube[rotationRow_.num[2]].cube[1][row] = sixCube.oneCube[rotationRow_.num[3]].cube[1][row + reverce];
+	sixCube.oneCube[rotationRow_.num[2]].cube[2][row] = sixCube.oneCube[rotationRow_.num[3]].cube[2][row + reverce];
+
+	sixCube.oneCube[rotationRow_.num[3]].cube[0][row + reverce] = (uint32_t)prevCube.x;
+	sixCube.oneCube[rotationRow_.num[3]].cube[1][row + reverce] = (uint32_t)prevCube.y;
+	sixCube.oneCube[rotationRow_.num[3]].cube[2][row + reverce] = (uint32_t)prevCube.z;
+
+
+	RotationAround(sixCube, row, kLeftAround_, kRightAround_);
 }
 
 
@@ -74,73 +90,73 @@ void RotationYState::Rotation(SixCube& sixCube, const uint32_t& row) {
 	rotationRow_.num[2] = 4 + matrixNum;
 	rotationRow_.num[3] = 6 + matrixNum;
 
+	int reverce = 0;
+
+	if (row == 0) {
+		reverce += 2;
+	}
+	else if (row == 2) {
+		reverce -= 2;
+	}
 
 	TuboEngine::Math::Vector3 prevCube = { (float)sixCube.oneCube[rotationRow_.num[0]].cube[row][0],(float)sixCube.oneCube[rotationRow_.num[0]].cube[row][1],(float)sixCube.oneCube[rotationRow_.num[0]].cube[row][2] };
 
-	for (int i = 0; i < 4 - 1; i++) {
-		sixCube.oneCube[rotationRow_.num[i]].cube[row][0] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[row][0];
-		sixCube.oneCube[rotationRow_.num[i]].cube[row][1] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[row][1];
-		sixCube.oneCube[rotationRow_.num[i]].cube[row][2] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[row][2];
-	}
+	sixCube.oneCube[rotationRow_.num[0]].cube[row][0] = sixCube.oneCube[rotationRow_.num[1]].cube[row][0];
+	sixCube.oneCube[rotationRow_.num[0]].cube[row][1] = sixCube.oneCube[rotationRow_.num[1]].cube[row][1];
+	sixCube.oneCube[rotationRow_.num[0]].cube[row][2] = sixCube.oneCube[rotationRow_.num[1]].cube[row][2];
 
-	sixCube.oneCube[rotationRow_.num[3]].cube[row][0] = (uint32_t)prevCube.x;
-	sixCube.oneCube[rotationRow_.num[3]].cube[row][1] = (uint32_t)prevCube.y;
-	sixCube.oneCube[rotationRow_.num[3]].cube[row][2] = (uint32_t)prevCube.z;
+	sixCube.oneCube[rotationRow_.num[1]].cube[row][0] = sixCube.oneCube[rotationRow_.num[2]].cube[row][0];
+	sixCube.oneCube[rotationRow_.num[1]].cube[row][1] = sixCube.oneCube[rotationRow_.num[2]].cube[row][1];
+	sixCube.oneCube[rotationRow_.num[1]].cube[row][2] = sixCube.oneCube[rotationRow_.num[2]].cube[row][2];
 
+	sixCube.oneCube[rotationRow_.num[2]].cube[row][0] = sixCube.oneCube[rotationRow_.num[3]].cube[row + reverce][0];
+	sixCube.oneCube[rotationRow_.num[2]].cube[row][1] = sixCube.oneCube[rotationRow_.num[3]].cube[row + reverce][1];
+	sixCube.oneCube[rotationRow_.num[2]].cube[row][2] = sixCube.oneCube[rotationRow_.num[3]].cube[row + reverce][2];
 
+	sixCube.oneCube[rotationRow_.num[3]].cube[row + reverce][0] = (uint32_t)prevCube.x;
+	sixCube.oneCube[rotationRow_.num[3]].cube[row + reverce][1] = (uint32_t)prevCube.y;
+	sixCube.oneCube[rotationRow_.num[3]].cube[row + reverce][2] = (uint32_t)prevCube.z;
 
-	RotationAround(sixCube, row, kDownAround_, kUpAround_);
+	RotationAround(sixCube, row, kUpAround_, kDownAround_);
 }
 
 
 void RotationZState::Rotation(SixCube& sixCube, const uint32_t& row) {
-
-
-
-
-
-
-
-
-
-
-
-
 	rotationRow_.num[0] = 1 + matrixNum;//[row][]
-	rotationRow_.num[1] = 3 + matrixNum;//[][row]
+	rotationRow_.num[1] = 2 + matrixNum;//[][row]
 	rotationRow_.num[2] = 5 + matrixNum;//[row][]
-	rotationRow_.num[3] = 6 + matrixNum;//[][row]
+	rotationRow_.num[3] = 4 + matrixNum;//[][row]
+
+
+	int reverce = 0;
+
+	if (row == 0) {
+		reverce += 2;
+	}
+	else if (row == 2) {
+		reverce -= 2;
+	}
+
 
 	TuboEngine::Math::Vector3 prevCube = { (float)sixCube.oneCube[rotationRow_.num[0]].cube[row][0],(float)sixCube.oneCube[rotationRow_.num[0]].cube[row][1],(float)sixCube.oneCube[rotationRow_.num[0]].cube[row][2] };
 
 
-	sixCube.oneCube[rotationRow_.num[0]].cube[row][0] = sixCube.oneCube[rotationRow_.num[1]].cube[0][row];
+	sixCube.oneCube[rotationRow_.num[0]].cube[row][0] = sixCube.oneCube[rotationRow_.num[1]].cube[2][row];
 	sixCube.oneCube[rotationRow_.num[0]].cube[row][1] = sixCube.oneCube[rotationRow_.num[1]].cube[1][row];
-	sixCube.oneCube[rotationRow_.num[0]].cube[row][2] = sixCube.oneCube[rotationRow_.num[1]].cube[2][row];
+	sixCube.oneCube[rotationRow_.num[0]].cube[row][2] = sixCube.oneCube[rotationRow_.num[1]].cube[0][row];
 
-	sixCube.oneCube[rotationRow_.num[1]].cube[0][row] = sixCube.oneCube[rotationRow_.num[2]].cube[row][0];
-	sixCube.oneCube[rotationRow_.num[1]].cube[1][row] = sixCube.oneCube[rotationRow_.num[2]].cube[row][1];
-	sixCube.oneCube[rotationRow_.num[1]].cube[2][row] = sixCube.oneCube[rotationRow_.num[2]].cube[row][2];
+	sixCube.oneCube[rotationRow_.num[1]].cube[0][row] = sixCube.oneCube[rotationRow_.num[2]].cube[row + reverce][0];
+	sixCube.oneCube[rotationRow_.num[1]].cube[1][row] = sixCube.oneCube[rotationRow_.num[2]].cube[row + reverce][1];
+	sixCube.oneCube[rotationRow_.num[1]].cube[2][row] = sixCube.oneCube[rotationRow_.num[2]].cube[row + reverce][2];
 
-	sixCube.oneCube[rotationRow_.num[2]].cube[row][0] = sixCube.oneCube[rotationRow_.num[3]].cube[0][row];
-	sixCube.oneCube[rotationRow_.num[2]].cube[row][1] = sixCube.oneCube[rotationRow_.num[3]].cube[1][row];
-	sixCube.oneCube[rotationRow_.num[2]].cube[row][2] = sixCube.oneCube[rotationRow_.num[3]].cube[2][row];
+	sixCube.oneCube[rotationRow_.num[2]].cube[row + reverce][0] = sixCube.oneCube[rotationRow_.num[3]].cube[2][row + reverce];
+	sixCube.oneCube[rotationRow_.num[2]].cube[row + reverce][1] = sixCube.oneCube[rotationRow_.num[3]].cube[1][row + reverce];
+	sixCube.oneCube[rotationRow_.num[2]].cube[row + reverce][2] = sixCube.oneCube[rotationRow_.num[3]].cube[0][row + reverce];
 
-	sixCube.oneCube[rotationRow_.num[3]].cube[0][row] = (uint32_t)prevCube.x;
-	sixCube.oneCube[rotationRow_.num[3]].cube[1][row] = (uint32_t)prevCube.y;
-	sixCube.oneCube[rotationRow_.num[3]].cube[2][row] = (uint32_t)prevCube.z;
-
-
-	//for (int i = 0; i < 4 - 1; i++) {
-	//	sixCube.oneCube[rotationRow_.num[i]].cube[0][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[0][row];
-	//	sixCube.oneCube[rotationRow_.num[i]].cube[1][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[1][row];
-	//	sixCube.oneCube[rotationRow_.num[i]].cube[2][row] = sixCube.oneCube[rotationRow_.num[i + 1]].cube[2][row];
-	//}
-
-	//sixCube.oneCube[rotationRow_.num[3]].cube[0][row] = (uint32_t)prevCube.x;
-	//sixCube.oneCube[rotationRow_.num[3]].cube[1][row] = (uint32_t)prevCube.y;
-	//sixCube.oneCube[rotationRow_.num[3]].cube[2][row] = (uint32_t)prevCube.z;
+	sixCube.oneCube[rotationRow_.num[3]].cube[0][row + reverce] = (uint32_t)prevCube.x;
+	sixCube.oneCube[rotationRow_.num[3]].cube[1][row + reverce] = (uint32_t)prevCube.y;
+	sixCube.oneCube[rotationRow_.num[3]].cube[2][row + reverce] = (uint32_t)prevCube.z;
 
 
-	RotationAround(sixCube, row, kLeftAround_, kRightAround_);
+	RotationAround(sixCube, row, kFarAround_, kNearAround_);
 }

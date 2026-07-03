@@ -19,7 +19,7 @@ void RubikCube::Initialize(TuboEngine::Camera* camera) {
 				object->Initialize("OneCube/OneCube.obj");
 				object->SetCamera(camera);
 				object->SetPosition({ float(x),float(y),float(z) });
-				object->SetScale({ 0.5f,0.5f,0.5f });
+				object->SetScale({ 0.3f,0.3f,0.3f });
 				objects_.push_back(std::move(object));
 			}
 		}
@@ -38,12 +38,13 @@ void RubikCube::Initialize(TuboEngine::Camera* camera) {
 		sixCube_.oneCube[i].cube[2][2] = 0;
 	}
 
-	sixCube_.oneCube[1].cube[0][0] = 1;
 	sixCube_.oneCube[2].cube[0][1] = 1;
+
+	sixCube_.oneCube[2].cube[2][2] = 1;
+
+	sixCube_.oneCube[3].cube[0][0] = 1;
+	sixCube_.oneCube[3].cube[0][1] = 1;
 	sixCube_.oneCube[3].cube[0][2] = 1;
-	sixCube_.oneCube[4].cube[1][0] = 1;
-	sixCube_.oneCube[5].cube[1][2] = 1;
-	sixCube_.oneCube[0].cube[2][1] = 1;
 
 
 
@@ -114,28 +115,28 @@ void RubikCube::Update() {
 					object->SetCamera(camera_);
 
 					if (i == 0) {
-						object->SetPosition({ float(x),1,float(y) });
+						object->SetPosition({ float(x),1,-float(y) });
 						object->SetRotation({ 0 ,0, 0 });//上
 					}
 					else if (i == 1) {
-						object->SetPosition({ float(x),float(y),-1 });
-						object->SetRotation({ -90.0f * (float(M_PI) / 180.0f),0,0 });//右
+						object->SetPosition({ -1,-float(y),-float(x) });
+						object->SetRotation({ 0,0,90.0f * (float(M_PI) / 180.0f) });//右
 					}
 					else if (i == 2) {
-						object->SetPosition({ 1,float(y),float(x) });
-						object->SetRotation({ 0,0,-90.0f * (float(M_PI) / 180.0f) });//手前
+						object->SetPosition({ float(x),-float(y),-1 });
+						object->SetRotation({ -90.0f * (float(M_PI) / 180.0f),0,0 });//手前
 					}
 					else if (i == 3) {
-						object->SetPosition({ float(x),float(y),1 });
-						object->SetRotation({ 90.0f * (float(M_PI) / 180.0f),0,0 });//左
+						object->SetPosition({ 1,-float(y),float(x) });
+						object->SetRotation({ 0,0,-90.0f * (float(M_PI) / 180.0f) });//左
 					}
 					else if (i == 4) {
 						object->SetPosition({ float(x),-1,float(y) });
-						object->SetRotation({ 180.0f  * (float(M_PI) / 180.0f),0,0 });//下
+						object->SetRotation({ 0,0,180.0f * (float(M_PI) / 180.0f) });//下
 					}
 					else if (i == 5) {
-						object->SetPosition({ -1,float(y),float(x) });
-						object->SetRotation({ 0,0,90.0f * (float(M_PI) / 180.0f) });//奥
+						object->SetPosition({ -float(x),float(y),1 });
+						object->SetRotation({90.0f * (float(M_PI) / 180.0f),0,0 });//奥
 					}
 
 					object->SetScale({ 0.5f ,0.5f ,0.5f });
@@ -180,7 +181,7 @@ void RubikCube::Debug() {
 	ImGui::Separator();
 
 	for (int masume = 0; masume < 6; masume++) {
-		ImGui::Text("Cube: %d", masume + 1);
+		ImGui::Text("Cube: %d", masume);
 		for (int tate = 0; tate < 3; tate++) {
 			ImGui::Text("%d %d %d", sixCube_.oneCube[masume].cube[tate][0], sixCube_.oneCube[masume].cube[tate][1], sixCube_.oneCube[masume].cube[tate][2]);
 		}

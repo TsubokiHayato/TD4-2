@@ -1,0 +1,72 @@
+{
+  "sprites": [],
+  "texts": [
+    {
+      "name": "title",
+      "text": "GAME TITLE",
+      "font": "Best10",
+      "fontSize": 72,
+      "anchor": 2,
+      "margin": [0, 120],
+      "color": [1.0, 1.0, 1.0, 1.0]
+    },
+    {
+      "name": "menu_start",
+      "text": "ゲームスタート",
+      "font": "YasashisaGothicBold-V2",
+      "fontSize": 40,
+      "position": [640, 340],
+      "horizontalAlign": 1,
+      "verticalAlign": 1,
+      "color": [1.0, 1.0, 1.0, 1.0]
+    },
+    {
+      "name": "menu_option",
+      "text": "設定",
+      "font": "YasashisaGothicBold-V2",
+      "fontSize": 40,
+      "position": [640, 410],
+      "horizontalAlign": 1,
+      "verticalAlign": 1,
+      "color": [1.0, 1.0, 1.0, 1.0]
+    },
+    {
+      "name": "menu_exit",
+      "text": "終了",
+      "font": "YasashisaGothicBold-V2",
+      "fontSize": 40,
+      "position": [640, 480],
+      "horizontalAlign": 1,
+      "verticalAlign": 1,
+      "color": [1.0, 1.0, 1.0, 1.0]
+    },
+    {
+      "name": "cursor",
+      "text": "▶",
+      "font": "YasashisaGothicBold-V2",
+      "fontSize": 40,
+      "position": [465, 340],
+      "horizontalAlign": 1,
+      "verticalAlign": 1,
+      "color": [1.0, 0.85, 0.2, 1.0]
+    },
+    {
+      "name": "hint",
+      "text": "↑↓ / W S : 選択　　Enter / A : 決定",
+      "font": "YasashisaGothicBold-V2",
+      "fontSize": 24,
+      "anchor": 8,
+      "margin": [0, 48],
+      "color": [0.8, 0.8, 0.8, 1.0]
+    },
+    {
+      "name": "version",
+      "text": "Ver 1.0",
+      "font": "Best10",
+      "fontSize": 20,
+      "anchor": 9,
+      "margin": [16, 12],
+      "color": [0.6, 0.6, 0.6, 1.0]
+    }
+  ]
+}

@@ -46,7 +46,7 @@
       "name": "menu_start",
       "position": [
         640.0,
-        475.0
+        500.0
       ],
       "relativeAnchor": 0,
       "relativeGap": 8.0,
@@ -73,7 +73,7 @@
       "name": "menu_option",
       "position": [
         640.0,
-        545.0
+        570.0
       ],
       "relativeAnchor": 0,
       "relativeGap": 8.0,
@@ -100,7 +100,7 @@
       "name": "menu_exit",
       "position": [
         640.0,
-        615.0
+        630.0
       ],
       "relativeAnchor": 0,
       "relativeGap": 8.0,
@@ -137,7 +137,7 @@
       "verticalAlign": 1
     },
     {
-      "anchor": 8,
+      "anchor": 0,
       "color": [
         0.800000011920929,
         0.800000011920929,

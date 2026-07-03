@@ -326,9 +326,9 @@ void SampleScene::DrawGuideImGui() {
 			ImGui::BulletText("BehaviorTree : AI のビヘイビアツリー");
 			ImGui::BulletText("Framework::SetBlendMode : 加算/減算などの合成切替");
 		}
-		ImGuiManager::GetInstance()->EndPanel();
+		
 	}
-
+ImGuiManager::GetInstance()->EndPanel();
 #endif
 }
 

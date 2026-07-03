@@ -4,6 +4,7 @@
 #include "TextManager.h"
 #include "TextObject.h"
 #include "settings/Settings.h"
+#include "audio/AudioManager.h"
 #include "Input.h"
 #include <string>
 
@@ -51,6 +52,11 @@ void OptionScene::Initialize() {
 	selected_ = 0;
 	RefreshValues();
 	ApplySelection();
+
+	// タイトルから引き継いだ BGM を維持（直接開いても鳴るように）。
+	AudioManager::GetInstance()->PlayBgm("title.wav");
+	// 設定画面を開いた合図。
+	AudioManager::GetInstance()->PlaySe("window_open.mp3");
 }
 
 // =============================================================================
@@ -63,13 +69,19 @@ void OptionScene::BuildItems() {
 	items_.push_back(Item{
 		"BGM音量",
 		[s] { return ToPercent(s->bgmVolume); },
-		[s](int dir) { s->bgmVolume = Clamp01(s->bgmVolume + dir * 0.1f); },
+		[s](int dir) {
+			s->bgmVolume = Clamp01(s->bgmVolume + dir * 0.1f);
+			AudioManager::GetInstance()->ApplyBgmVolume(); // 鳴っている BGM に即反映
+		},
 		nullptr});
 
 	items_.push_back(Item{
 		"SE音量",
 		[s] { return ToPercent(s->seVolume); },
-		[s](int dir) { s->seVolume = Clamp01(s->seVolume + dir * 0.1f); },
+		[s](int dir) {
+			s->seVolume = Clamp01(s->seVolume + dir * 0.1f);
+			AudioManager::GetInstance()->PlaySe("cursor_move.mp3"); // 変更後の音量を試聴
+		},
 		nullptr});
 
 	// アクション項目：onDecide（決定時の動作）を書く。
@@ -77,6 +89,7 @@ void OptionScene::BuildItems() {
 		"既定値に戻す", nullptr, nullptr,
 		[this] {
 			Settings::GetInstance()->ResetToDefault();
+			AudioManager::GetInstance()->ApplyBgmVolume();
 			RefreshValues();
 		}});
 
@@ -173,6 +186,7 @@ void OptionScene::Update() {
 		if (int dir = TakeVerticalInput(); dir != 0) {
 			selected_ = (selected_ + dir + itemCount) % itemCount;
 			ApplySelection();
+			AudioManager::GetInstance()->PlaySe("cursor_move.mp3");
 		}
 
 		// 値変更（← →）
@@ -186,6 +200,7 @@ void OptionScene::Update() {
 
 		// 決定
 		if (TakeDecideInput()) {
+			AudioManager::GetInstance()->PlaySe("decide.mp3");
 			Item& item = items_[static_cast<size_t>(selected_)];
 			if (item.onDecide) {
 				item.onDecide();

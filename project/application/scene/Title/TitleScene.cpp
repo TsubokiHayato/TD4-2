@@ -4,6 +4,7 @@
 #include "TextManager.h"
 #include "TextObject.h"
 #include "Input.h"   // キーボード / パッド入力
+#include "audio/AudioManager.h" // BGM / SE
 #include <Windows.h> // PostQuitMessage（終了）
 
 using namespace TuboEngine;
@@ -42,6 +43,9 @@ void TitleScene::Initialize() {
 
 	selected_ = kMenuStart;
 	ApplySelection();
+
+	// タイトル BGM をループ再生（既に鳴っていれば音量だけ合わせる）。
+	AudioManager::GetInstance()->PlayBgm("title.wav");
 }
 
 void TitleScene::Update() {
@@ -51,10 +55,12 @@ void TitleScene::Update() {
 	if (int dir = TakeVerticalInput(); dir != 0) {
 		selected_ = (selected_ + dir + kMenuCount) % kMenuCount; // 端でループ
 		ApplySelection();
+		AudioManager::GetInstance()->PlaySe("cursor_move.mp3"); // カーソル移動音
 	}
 
 	// 決定
 	if (TakeDecideInput()) {
+		AudioManager::GetInstance()->PlaySe("decide.mp3"); // 決定音
 		DecideSelection();
 	}
 
@@ -77,7 +83,8 @@ void TitleScene::ApplySelection() {
 void TitleScene::DecideSelection() {
 	switch (selected_) {
 	case kMenuStart:
-		SceneManager::GetInstance()->ChangeScene(STAGE); // 次フレームでゲーム本編へ
+		AudioManager::GetInstance()->PlayBgm("game.wav"); // ゲーム BGM へ切替
+		SceneManager::GetInstance()->ChangeScene(STAGE);  // 次フレームでゲーム本編へ
 		break;
 	case kMenuOption:
 		SceneManager::GetInstance()->ChangeScene(OPTION); // 設定画面へ

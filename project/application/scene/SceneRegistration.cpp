@@ -7,7 +7,7 @@
 #include"Stage/StageScene.h"
 #include"Clear/GameClearScene.h"
 #include"Over/GameOverScene.h"
-#include"User/User1Scene.h"
+#include"User/SatouScene.h"
 #include"User/OosakiScene.h"
 #include"User/SanoScene.h"
 #include"User/TuboScene.h"
@@ -22,7 +22,7 @@ void RegisterGameScenes() {
 	sm->RegisterScene(STAGE, [] { return std::make_unique<StageScene>(); }, "Stage");
 	sm->RegisterScene(CLEAR, [] { return std::make_unique<GameClearScene>(); }, "GameClear");
 	sm->RegisterScene(OVER, [] { return std::make_unique<GameOverScene>(); }, "GameOver");
-	sm->RegisterScene(USER1, [] { return std::make_unique<User1Scene>(); }, "User1");
+	sm->RegisterScene(USER1, [] { return std::make_unique<SatouScene>(); }, "Satou");
 	sm->RegisterScene(Oosaki, [] { return std::make_unique<OosakiScene>(); }, "Oosaki");
 	sm->RegisterScene(Sano, [] { return std::make_unique<SanoScene>(); }, "Sano");
 	sm->RegisterScene(Tubo, [] { return std::make_unique<TuboScene>(); }, "Tubo");

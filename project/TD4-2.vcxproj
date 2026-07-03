@@ -118,6 +118,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CubeMapConverter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="application\Order.cpp" />
     <ClCompile Include="application\scene\Sample\SampleScene.cpp" />
@@ -130,8 +131,14 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="application\scene\User\SanoScene.cpp" />
     <ClCompile Include="application\scene\User\OosakiScene.cpp" />
     <ClCompile Include="application\scene\User\TuboScene.cpp" />
+    <ClCompile Include="StageBuilder.cpp" />
+    <ClCompile Include="StageLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="application\FaceType.h" />
+    <ClInclude Include="application\GridPos.h" />
+    <ClInclude Include="application\HoleData.h" />
+    <ClInclude Include="application\HoleType.h" />
     <ClInclude Include="application\Order.h" />
     <ClInclude Include="application\scene\Sample\SampleScene.h" />
     <ClInclude Include="application\scene\GameScenes.h" />
@@ -144,6 +151,11 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="application\scene\User\SanoScene.h" />
     <ClInclude Include="application\scene\User\OosakiScene.h" />
     <ClInclude Include="application\scene\User\TuboScene.h" />
+    <ClInclude Include="application\MapChip.h" />
+    <ClInclude Include="application\WallData.h" />
+    <ClInclude Include="CubeMapConverter.h" />
+    <ClInclude Include="StageBuilder.h" />
+    <ClInclude Include="StageLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="EngineCore\EngineLib\EngineLib.vcxproj">

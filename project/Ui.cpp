@@ -15,25 +15,25 @@ void Ui::Initialize() {
 	pauseSprite_->SetAnchorPoint({ 0.5f,0.5f });
 	//リトライスプライトの初期化
 	retrySprite_ = std::make_unique<TuboEngine::Sprite>();
-	retrySprite_->Initialize("particle.png");
+	retrySprite_->Initialize("retry.png");
 	retrySprite_->SetAnchorPoint({ 0.5f,0.5f });
 	retrySprite_->SetPosition(center_);
 	retrySprite_->SetSize({ 0,0 });
 	//タイトルへスプライトの初期化
 	toTitleSprite_ = std::make_unique<TuboEngine::Sprite>();
-	toTitleSprite_->Initialize("yellow.png");
+	toTitleSprite_->Initialize("totitle.png");
 	toTitleSprite_->SetAnchorPoint({ 0.5f,0.5f });
 	toTitleSprite_->SetPosition(center_);
 	toTitleSprite_->SetSize({ 0,0 });
 	//セレクトへスプライトの初期化
 	toSelectSprite_ = std::make_unique<TuboEngine::Sprite>();
-	toSelectSprite_->Initialize("tile.png");
+	toSelectSprite_->Initialize("toselect.png");
 	toSelectSprite_->SetAnchorPoint({ 0.5f,0.5f });
 	toSelectSprite_->SetPosition(center_);
 	toSelectSprite_->SetSize({ 0,0 });
 	//操作説明メニュースプライトの初期化
 	controlsMenuSprite_ = std::make_unique<TuboEngine::Sprite>();
-	controlsMenuSprite_->Initialize("noise0.png");
+	controlsMenuSprite_->Initialize("operationtext.png");
 	controlsMenuSprite_->SetAnchorPoint({ 0.5f,0.5f });
 	controlsMenuSprite_->SetPosition(center_);
 	controlsMenuSprite_->SetSize({ 0,0 });

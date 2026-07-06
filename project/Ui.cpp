@@ -15,25 +15,25 @@ void Ui::Initialize() {
 	pauseSprite_->SetAnchorPoint({ 0.5f,0.5f });
 	//リトライスプライトの初期化
 	retrySprite_ = std::make_unique<TuboEngine::Sprite>();
-	retrySprite_->Initialize("particle.png");
+	retrySprite_->Initialize("retry.png");
 	retrySprite_->SetAnchorPoint({ 0.5f,0.5f });
 	retrySprite_->SetPosition(center_);
 	retrySprite_->SetSize({ 0,0 });
 	//タイトルへスプライトの初期化
 	toTitleSprite_ = std::make_unique<TuboEngine::Sprite>();
-	toTitleSprite_->Initialize("yellow.png");
+	toTitleSprite_->Initialize("totitle.png");
 	toTitleSprite_->SetAnchorPoint({ 0.5f,0.5f });
 	toTitleSprite_->SetPosition(center_);
 	toTitleSprite_->SetSize({ 0,0 });
 	//セレクトへスプライトの初期化
 	toSelectSprite_ = std::make_unique<TuboEngine::Sprite>();
-	toSelectSprite_->Initialize("tile.png");
+	toSelectSprite_->Initialize("toselect.png");
 	toSelectSprite_->SetAnchorPoint({ 0.5f,0.5f });
 	toSelectSprite_->SetPosition(center_);
 	toSelectSprite_->SetSize({ 0,0 });
 	//操作説明メニュースプライトの初期化
 	controlsMenuSprite_ = std::make_unique<TuboEngine::Sprite>();
-	controlsMenuSprite_->Initialize("noise0.png");
+	controlsMenuSprite_->Initialize("operationtext.png");
 	controlsMenuSprite_->SetAnchorPoint({ 0.5f,0.5f });
 	controlsMenuSprite_->SetPosition(center_);
 	controlsMenuSprite_->SetSize({ 0,0 });
@@ -57,17 +57,18 @@ void Ui::Update() {
 	controlsMenuSprite_->Update();
 	controlsDetailSprite_->Update();
 
+	//ポーズメニューの回転処理
 	if (isRotating_) {
 
-		rotateTimer_ += rotateSpeed_;
-
+		rotateTimer_ += rotateSpeed_;//回転タイマーの更新
+		//回転タイマーの範囲を制限
 		if (rotateTimer_ >= 1.0f) {
 
 			rotateTimer_ = 1.0f;
 			isRotating_ = false;
 
 			pauseSelectIndex_ =
-				(pauseSelectIndex_ + rotateDir_ + 4) % 4;
+				(pauseSelectIndex_ + rotateDir_ + 4) % 4;//インデックスの範囲を制限
 		}
 	}
 }
@@ -187,10 +188,10 @@ void Ui::UpdatePauseMenu() {
 
 	float selectScale = 1.0f + sinf(pauseSelectAnimTimer_ * 5.0f) * 0.08f;
 
-	Vector2 frontPos = center_;
-	Vector2 rightPos = { center_.x + 260.0f, center_.y };
-	Vector2 leftPos = { center_.x - 260.0f, center_.y };
-	Vector2 backPos = { center_.x, center_.y - 120.0f };
+	Vector2 frontPos = center_;//正面の位置
+	Vector2 rightPos = { center_.x + 260.0f, center_.y };//右の位置
+	Vector2 leftPos = { center_.x - 260.0f, center_.y };//左の位置
+	Vector2 backPos = { center_.x, center_.y - 120.0f };//後ろの位置
 
 	const float frontScale = 1.0f;//正面のスケール
 	const float sideScale = 0.75f;//左右のスケール
@@ -206,19 +207,19 @@ void Ui::UpdatePauseMenu() {
 	Vector2 size;
 	//選択中のスプライトとサイズを設定
 	switch (pauseSelectIndex_) {
-	case 0:
+	case 0://操作説明
 		sprite = controlsMenuSprite_.get();
 		size = controlsMenuBaseSize_;
 		break;
-	case 1:
+	case 1://リトライ
 		sprite = retrySprite_.get();
 		size = retryBaseSize_;
 		break;
-	case 2:
+	case 2://セレクトへ
 		sprite = toSelectSprite_.get();
 		size = selectBaseSize_;
 		break;
-	case 3:
+	case 3://タイトルへ
 		sprite = toTitleSprite_.get();
 		size = titleBaseSize_;
 		break;

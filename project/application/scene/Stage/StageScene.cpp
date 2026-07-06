@@ -1,6 +1,9 @@
 #include "StageScene.h"
 #include "GameScenes.h"
+#include "TextManager.h"
 #include "SceneManager.h" // シーン遷移を使うとき用
+
+using namespace TuboEngine;
 
 void StageScene::Initialize() {
 	// 最低限のカメラ
@@ -21,6 +24,7 @@ void StageScene::Initialize() {
 	ui_ = std::make_unique<Ui>();
 	ui_->Initialize();
 
+	TuboEngine::TextManager::GetInstance()->LoadTextLayout("Resources/Text/Stage.json");
 }
 
 void StageScene::Update() {
@@ -47,6 +51,8 @@ void StageScene::Update() {
 
 	//ポーズメニューでのシーン切り替え
 	ChangeSceneFromPause();
+	//TextManagerの更新
+	TuboEngine::TextManager::GetInstance()->UpdateAll();
 
 	// 別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(CLEAR);   // 次フレームで切り替わる
 }
@@ -64,10 +70,15 @@ void StageScene::Object3DDraw() {
 void StageScene::SpriteDraw() {
 	//UIの描画
 	ui_->DrawStageScene();
+	//TextManager
+	TuboEngine::TextManager::GetInstance()->DrawAll();
+
 }    // TODO: 2Dスプライト描画
 void StageScene::ImGuiDraw() {
-	//
+	//UIクラスのデバッグ
 	ui_->Debug();
+	//TextManager
+	TuboEngine::TextManager::GetInstance()->DrawImGui();
 }    // TODO: ImGui描画
 void StageScene::ParticleDraw() {}    // TODO: パーティクル描画
 //キューブの回転アニメーション

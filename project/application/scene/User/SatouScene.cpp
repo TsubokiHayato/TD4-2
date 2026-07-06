@@ -11,26 +11,35 @@ void SatouScene::Initialize() {
 	camera_->setScale({ 1.0f, 1.0f, 1.0f });
 	camera_->Update();
 
+    // 開発・デバッグ用のカメラ初期化
     debugCamera_ = std::make_unique<DebugCamera>();
 
 	StageLoader stageLoader;
     CubeMapConverter converter(kCubeSize);
 
+	// CSVファイルからステージの構成データを読み込む
 	csvData_ = stageLoader.Load("Resources/4209_stages/stage1.csv");
+	// 読み込んだデータを展開図・各面データに変換する
 	holeData_ = converter.Convert(csvData_);
 
+    // 変換されたデータから壁の配置などを構築する
     StageBuilder builder(kCubeSize, kCellSize);
     wallData_ = builder.Build(csvData_);
 
+    // 各セル座標に応じた3Dオブジェクトを生成・初期配置する
     CreateWalls();
 }
 
 void SatouScene::Update() {
+	// カメラの更新
 	camera_->Update();
     debugCamera_->Update(camera_.get());
 
-    for (auto& wall : wallObjects_) {
-        wall->Update();
+    // 各セル(壁・コーン・四角)のトランスフォーム等の更新
+    for (auto& cell : cellObjects_) {
+        cell.wall->Update();
+        cell.cone->Update();
+        cell.square->Update();
     }
 	// TODO: ここに更新処理（入力・ゲームロジック）を書く
 	// 別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(STAGE);   // 次フレームで切り替わる
@@ -39,13 +48,29 @@ void SatouScene::Update() {
 void SatouScene::Finalize() {}
 
 void SatouScene::Object3DDraw() {
-    for (auto& wall : wallObjects_) {
-        wall->Draw();
+    // 設定されたタイプ(1:壁, 2:コーン, 3:四角)に従って3Dモデルを描画する
+    for (auto& cell : cellObjects_) {
+        if (!cell.isActive) continue;
+
+        switch (cell.type) {
+        case 1:
+            cell.wall->Draw();
+            break;
+        case 2:
+            cell.cone->Draw();
+            break;
+        case 3:
+            cell.square->Draw();
+            break;
+        }
     }
 }   // TODO: 3Dオブジェクト描画
 void SatouScene::SpriteDraw()  {}    // TODO: 2Dスプライト描画
 void SatouScene::ImGuiDraw()   {
+    // デバッグカメラ用UIの描画
     debugCamera_->DrawImGui();
+    
+    // --- ステージ構造の可視化とエディタ ---
     ImGui::Begin("Stage Map");
 
     const float cellSize = 30.0f;
@@ -94,7 +119,10 @@ void SatouScene::ImGuiDraw()   {
 
             if (ImGui::Button(label.c_str(), ImVec2(cellSize, cellSize))) {
                 csvData_[y][x] = (csvData_[y][x] + 1) % 4;
-                RebuildWalls();
+
+                int idx = Index(x, y);
+                cellObjects_[idx].type = csvData_[y][x];
+                cellObjects_[idx].isActive = (csvData_[y][x] != 0);
             }
             ImGui::PopStyleColor(3);
 
@@ -105,6 +133,8 @@ void SatouScene::ImGuiDraw()   {
     }
 
     ImGui::End();
+    
+    // --- ステージ生成パラメータの調整 ---
     ImGui::Begin("Stage Settings");
 
     bool changed = false;
@@ -113,17 +143,21 @@ void SatouScene::ImGuiDraw()   {
     changed |= ImGui::DragFloat("Wall Thickness", &wallThickness_, 0.01f, 0.01f, 5.0f);
     changed |= ImGui::DragFloat("Cube Margin", &cubeMargin_, 0.1f, 0.0f, 20.0f);
 
+    // 値が変更されたら壁のトランスフォームを再計算して反映する
     if (changed) {
         RebuildWalls();
     }
 
     ImGui::End();
+    
+    // --- 生成された壁データの確認 ---
 	ImGui::Begin("Wall Data");
     for (auto& wall : wallData_) {
         ImGui::Text("Face Type: %d", (int)wall.face);
 		ImGui::Text("WallType: %d", (int)wall.holeType);
 		ImGui::Text("world Pos: (%f, %f)", wall.worldPos.x, wall.worldPos.y);
 		ImGui::Text("Rotation: (%f, %f, %f)", wall.rotation.x, wall.rotation.y, wall.rotation.z);
+		ImGui::Text("Scale: (%f, %f, %f)", wall.scale.x, wall.scale.y, wall.scale.z);
     }
     ImGui::End();
 	
@@ -131,32 +165,48 @@ void SatouScene::ImGuiDraw()   {
 }    // TODO: ImGui描画
 void SatouScene::ParticleDraw(){}    // TODO: パーティクル描画
 
+/// <summary>
+/// ステージ全体の描画オブジェクトを生成する。
+/// 各セルごとに Wall / Cone / Square を事前生成し、
+/// 描画時に type で切り替える方式を採用している。
+/// </summary>
 void SatouScene::CreateWalls()
 {
-    wallObjects_.clear();
+    int height = static_cast<int>(csvData_.size());
+    int width = static_cast<int>(csvData_[0].size());
 
-    for (const auto& wall : wallData_) {
-        auto obj = std::make_unique<Object3d>();
+    cellObjects_.resize(width * height);
 
-        if (wall.holeType == HoleType::None) {
-            obj->Initialize("wall/wall.obj");
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+
+            int idx = Index(x, y);
+            auto& cell = cellObjects_[idx];
+
+            SetupObject(cell.wall, "wall/wall.obj");
+            SetupObject(cell.cone, "cone/cone.obj");
+            SetupObject(cell.square, "square/square.obj");
+
+            cell.type = csvData_[y][x];
+            cell.isActive = (cell.type != 0);
         }
-        else if (wall.holeType == HoleType::Cone) {
-            obj->Initialize("cone/cone.obj");
-		}
-		else if (wall.holeType == HoleType::Square) {
-			obj->Initialize("square/square.obj");
-		}
-
-        obj->SetPosition(wall.worldPos);
-        obj->SetRotation(wall.rotation);
-        obj->SetScale({ 1,1,1 });
-        obj->SetCamera(camera_.get());
-
-        wallObjects_.push_back(std::move(obj));
     }
+
+    RebuildWalls();
 }
 
+// モデル初期化のヘルパー関数
+void SatouScene::SetupObject(std::unique_ptr<Object3d>& obj, const std::string& path)
+{
+    obj = std::make_unique<Object3d>();
+    obj->Initialize(path);
+    obj->SetCamera(camera_.get());
+}
+
+/// <summary>
+/// CSVデータから壁配置情報を再生成する。
+/// セルサイズ・壁厚・マージン変更時に使用。
+/// </summary>
 void SatouScene::RebuildWalls()
 {
     StageBuilder builder(kCubeSize, stageCellSize_);
@@ -166,12 +216,43 @@ void SatouScene::RebuildWalls()
     wallData_ = builder.Build(csvData_);
     UpdateWallTransform();
 }
-
+// <summary>
+/// 各セルの位置・回転を再計算して反映する。
+/// Cube展開図上の座標を3D空間へ変換する。
+/// </summary>
 void SatouScene::UpdateWallTransform()
 {
-    for (size_t i = 0; i < wallObjects_.size(); i++) {
-        wallObjects_[i]->SetPosition(wallData_[i].worldPos);
-        wallObjects_[i]->SetRotation(wallData_[i].rotation);
-        wallObjects_[i]->SetScale({ 1,1,1 });
+    StageBuilder builder(kCubeSize, stageCellSize_);
+    builder.SetWallThickness(wallThickness_);
+    builder.SetCubeMargin(cubeMargin_);
+
+    int height = static_cast<int>(csvData_.size());
+    int width = static_cast<int>(csvData_[0].size());
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+
+            if (csvData_[y][x] == 0) continue;
+
+            int idx = Index(x, y);
+
+            FaceType face = builder.GetFace(x, y);
+            GridPos local = builder.GetLocalPos(x, y, face);
+
+            auto& cell = cellObjects_[idx];
+
+            Vector3 pos = builder.GetWorldPos(face, local);
+            Vector3 rot = builder.GetRotation(face);
+
+
+            cell.wall->SetPosition(pos);
+            cell.wall->SetRotation(rot);
+
+            cell.cone->SetPosition(pos);
+            cell.cone->SetRotation(rot);
+
+            cell.square->SetPosition(pos);
+            cell.square->SetRotation(rot);
+        }
     }
 }

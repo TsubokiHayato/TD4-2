@@ -12,18 +12,16 @@ public:
         const std::vector<std::vector<int>>& csvData
     );
 
-    void SetWallThickness(float thickness) { wallThickness_ = thickness; }
-
-    void SetCubeMargin(float margin) { cubeMargin_ = margin; }
-private:
     FaceType GetFace(int x, int y) const;
     GridPos GetLocalPos(int x, int y, FaceType face) const;
     HoleType GetHoleType(int value) const;
 
     Vector3 GetWorldPos(FaceType face, GridPos pos) const;
     Vector3 GetRotation(FaceType face) const;
+    void SetWallThickness(float thickness) { wallThickness_ = thickness; }
 
-	
+    void SetCubeMargin(float margin) { cubeMargin_ = margin; }
+private:
 
     int cubeSize_;
     float cellSize_;

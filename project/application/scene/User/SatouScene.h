@@ -9,8 +9,29 @@
 #include <DebugCamera.h>
 
 using namespace TuboEngine;
-// Satou の個人開発用シーン（サンドボックス）
-// ここに自分の処理を足していく（カメラだけ持った最小の雛形）。
+
+/// <summary>
+/// ステージ上の1マスに対応する描画オブジェクト群。
+/// 各マスごとに Wall / Cone / Square の3種類を保持し、
+/// type に応じて描画対象を切り替える。
+/// 再生成せずに表示切替できるようにするための構造体。
+/// </summary>
+struct CellObject {
+	std::unique_ptr<Object3d> wall;
+	std::unique_ptr<Object3d> cone;
+	std::unique_ptr<Object3d> square;
+
+	bool isActive = false; // このマスが有効か
+	int type = 0;          // 0=None, 1=Wall, 2=Cone, 3=Square
+};
+
+/// <summary>
+/// 佐藤用ステージ編集シーン。
+/// 
+/// CSVからステージデータを読み込み、
+/// キューブ展開図形式で各面にオブジェクトを配置する。
+/// ImGuiからリアルタイムでステージ編集が可能。
+/// </summary>
 class SatouScene : public IScene {
 public:
 	void Initialize() override;
@@ -20,28 +41,66 @@ public:
 	void SpriteDraw() override;
 	void ImGuiDraw() override;
 	void ParticleDraw() override;
+
 	TuboEngine::Camera* GetMainCamera() const override { return camera_.get(); }
 
 private:
+	/// <summary>
+	/// 2次元座標を1次元配列インデックスへ変換
+	/// </summary>
+	int Index(int x, int y) {
+		int width = static_cast<int>(csvData_[0].size());
+		return y * width + x;
+	}
+
+	/// <summary>
+	/// ステージ全マス分のCellObjectを生成
+	/// </summary>
 	void CreateWalls();
 
-	void RebuildWalls(); // 壁の再構築（csvData_ の変更後に呼ぶ）
+	/// <summary>
+	/// Object3d生成共通処理
+	/// </summary>
+	void SetupObject(std::unique_ptr<Object3d>& obj, const std::string& path);
 
-	void UpdateWallTransform(); // wallData_ の変更後に呼ぶ
+	/// <summary>
+	/// CSVデータから壁情報を再構築
+	/// セルサイズや壁厚変更時に呼ぶ
+	/// </summary>
+	void RebuildWalls();
+
+	/// <summary>
+	/// 各CellObjectにTransformを反映
+	/// </summary>
+	void UpdateWallTransform();
+
 private:
+	// メインカメラ
 	std::unique_ptr<TuboEngine::Camera> camera_;
-	std::unique_ptr<TuboEngine::DebugCamera> debugCamera_; // F2 で乗っ取るフリーカメラ
 
+	// デバッグ用フリーカメラ
+	std::unique_ptr<TuboEngine::DebugCamera> debugCamera_;
 
+	// ステージCSVデータ
 	std::vector<std::vector<int>> csvData_;
-	std::vector<HoleData> holeData_;
-	std::vector<WallData> wallData_;
-	std::vector<std::unique_ptr<Object3d>> wallObjects_;
 
+	// 穴情報（必要なら判定などで使用）
+	std::vector<HoleData> holeData_;
+
+	// 壁配置情報
+	std::vector<WallData> wallData_;
+
+	// 全マス分の描画オブジェクト
+	std::vector<CellObject> cellObjects_;
+
+	// キューブ1辺のマス数
 	static constexpr int kCubeSize = 3;
+
+	// デフォルトセルサイズ
 	static constexpr float kCellSize = 2.0f;
 
+	// ステージ設定
 	float stageCellSize_ = 2.0f;
-	float wallThickness_ = 0.2f; // 壁の厚み
-	float cubeMargin_ = 5.0f;    // 中央からの距離
+	float wallThickness_ = 0.2f;
+	float cubeMargin_ = 5.0f;
 };

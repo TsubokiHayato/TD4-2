@@ -29,7 +29,8 @@ std::vector<WallData> StageBuilder::Build(const std::vector<std::vector<int>>& c
                 GetWorldPos(face, localPos),
                 GetRotation(face),
                 { cellSize_, cellSize_, cellSize_ },
-                GetHoleType(value)
+                GetHoleType(value),
+                value != 0
                 });
         }
     }
@@ -52,7 +53,7 @@ FaceType StageBuilder::GetFace(int x, int y) const
     }
 
     // Front
-    if (x >= cubeSize_ && x < cubeSize_ * 2 &&
+    if (x >= cubeSize_ * 3 && x < cubeSize_ * 4 &&
         y >= cubeSize_ && y < cubeSize_ * 2) {
         return FaceType::Front;
     }
@@ -64,11 +65,10 @@ FaceType StageBuilder::GetFace(int x, int y) const
     }
 
     // Back
-    if (x >= cubeSize_ * 3 && x < cubeSize_ * 4 &&
+    if (x >= cubeSize_ && x < cubeSize_ * 2 &&
         y >= cubeSize_ && y < cubeSize_ * 2) {
         return FaceType::Back;
     }
-
     // Bottom
     if (x >= cubeSize_ && x < cubeSize_ * 2 &&
         y >= cubeSize_ * 2 && y < cubeSize_ * 3) {
@@ -92,7 +92,7 @@ GridPos StageBuilder::GetLocalPos(int x, int y, FaceType face) const
 
         // Front面内座標
     case FaceType::Front:
-        return { x - cubeSize_, y - cubeSize_ };
+        return { x - cubeSize_ * 3, y - cubeSize_ };
 
         // Right面内座標
     case FaceType::Right:
@@ -100,7 +100,7 @@ GridPos StageBuilder::GetLocalPos(int x, int y, FaceType face) const
 
         // Back面内座標
     case FaceType::Back:
-        return { x - cubeSize_ * 3, y - cubeSize_ };
+        return { x - cubeSize_, y - cubeSize_ };
 
         // Bottom面内座標
     case FaceType::Bottom:
@@ -125,7 +125,7 @@ Vector3 StageBuilder::GetWorldPos(FaceType face, GridPos pos) const
     float surfaceOffset = half + cubeMargin_ + wallThickness_ * 0.5f;
     float offset = (cubeSize_ - 1) * 0.5f;
 
-    float localX = (pos.x - offset) * cellSize_;
+    float localX = -(pos.x - offset) * cellSize_;
     float localY = -(pos.y - offset) * cellSize_;
 
     switch (face) {
@@ -142,10 +142,10 @@ Vector3 StageBuilder::GetWorldPos(FaceType face, GridPos pos) const
         return { -surfaceOffset, localY, localX };
 
     case FaceType::Top:
-        return { localX, surfaceOffset, -localY };
+        return { -localX, surfaceOffset, localY };
 
     case FaceType::Bottom:
-        return { localX, -surfaceOffset, localY };
+        return { -localX, -surfaceOffset, -localY };
     }
 
     return { 0,0,0 };

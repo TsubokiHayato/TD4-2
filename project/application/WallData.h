@@ -10,4 +10,5 @@ struct WallData {
     TuboEngine::Math::Vector3 rotation;
     TuboEngine::Math::Vector3 scale;
     HoleType holeType;
+    bool isActive = true;
 };

@@ -52,6 +52,8 @@ public:
 	void SaveCubeStage();
 	//cubeCsvData_ をキューブの先端配置として適用
 	void ApplyCubeCsv();
+	//指定番号のステージ(壁+キューブCSV)を読み込む
+	void LoadStage(int index);
 
 private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
@@ -74,6 +76,8 @@ private:
 	int moveCount_ = 0;                                               // キューブ状態が変化した回数(操作が効いた回数)
 	std::string stagePath_ = "Resources/4209_stages/stage1.csv";     // 壁CSVのパス
 	std::string cubeStagePath_ = "Resources/4209_stages/cube1.csv";  // キューブCSVのパス
+	int stageIndex_ = 1;                                             // 現在のステージ番号
+	static constexpr int kStageCount = 2;                            // 用意されているステージ数
 
 	// キューブ1辺のマス数
 	static constexpr int kCubeSize = 3;

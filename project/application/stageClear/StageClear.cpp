@@ -1,6 +1,14 @@
 #include "StageClear.h"
 #include <ImGuiManager.h>
 
+int StageClear::ShapeOf(HoleType type) {
+    switch (type) {
+    case HoleType::Cone:   return 1;
+    case HoleType::Square: return 2;
+    default:               return 0;
+    }
+}
+
 int StageClear::FaceToCubeIndex(FaceType face) {
     // 面法線が一致するルービック面インデックスへ対応付ける。
     //   RubikCube 面: 0=+Y / 1=-X / 2=-Z / 3=+X / 4=-Y / 5=+Z
@@ -65,13 +73,14 @@ SixCube StageClear::BuildRequired(const std::vector<WallData>& walls, int cubeSi
 
         int face = FaceToCubeIndex(wall.face);
         Coord target = HoleToCoord(wall.face, wall.localPos, cubeSize);
+        int shape = ShapeOf(wall.holeType); // 要求する先端の形状ID
 
-        // 対応面内で座標が一致するセルに「先端が必要」を立てる
+        // 対応面内で座標が一致するセルに「必要な形状」を立てる
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 Coord c = CubeCellToCoord(face, row, col);
                 if (c.x == target.x && c.y == target.y && c.z == target.z) {
-                    required.oneCube[face].cube[row][col] = 1;
+                    required.oneCube[face].cube[row][col] = shape;
                 }
             }
         }
@@ -97,12 +106,13 @@ SixCube StageClear::BuildCubeState(const std::vector<WallData>& cells, int cubeS
 
         int face = FaceToCubeIndex(cell.face);
         Coord target = HoleToCoord(cell.face, cell.localPos, cubeSize);
+        int shape = ShapeOf(cell.holeType); // 先端の形状ID(Cone=1/Square=2)
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 Coord c = CubeCellToCoord(face, row, col);
                 if (c.x == target.x && c.y == target.y && c.z == target.z) {
-                    state.oneCube[face].cube[row][col] = 1; // 先端あり
+                    state.oneCube[face].cube[row][col] = shape; // 形状つき先端
                 }
             }
         }
@@ -115,9 +125,10 @@ bool StageClear::IsClear(const SixCube& current, const SixCube& required) {
     for (int i = 0; i < 6; i++) {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
+                // 穴のあるセルは、同じ形状の先端で塞がれている必要がある(位置+形状)。
                 if (required.oneCube[i].cube[row][col] >= 1 &&
-                    current.oneCube[i].cube[row][col] == 0) {
-                    return false; // 塞がれていない穴がある
+                    current.oneCube[i].cube[row][col] != required.oneCube[i].cube[row][col]) {
+                    return false;
                 }
             }
         }
@@ -135,13 +146,13 @@ void StageClear::DrawDebug(const SixCube& current, const SixCube& required) {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 if (required.oneCube[i].cube[row][col] >= 1 &&
-                    current.oneCube[i].cube[row][col] == 0) {
+                    current.oneCube[i].cube[row][col] != required.oneCube[i].cube[row][col]) {
                     remain++;
                 }
             }
         }
     }
-    ImGui::Text("Unfilled holes: %d", remain);
+    ImGui::Text("Unmatched holes: %d", remain);
     ImGui::Separator();
 
     // 面ごとに [先端有無 / 穴要求] を並べ、未達の穴に印を付ける
@@ -151,7 +162,7 @@ void StageClear::DrawDebug(const SixCube& current, const SixCube& required) {
             for (int col = 0; col < 3; col++) {
                 uint32_t cur = current.oneCube[i].cube[row][col];
                 uint32_t need = required.oneCube[i].cube[row][col];
-                bool ng = (need >= 1 && cur == 0);
+                bool ng = (need >= 1 && cur != need);
                 ImGui::TextColored(
                     ng ? ImVec4(1, 0.3f, 0.3f, 1) : ImVec4(0.6f, 1, 0.6f, 1),
                     "%u/%u%s", cur, need, ng ? "x" : " ");

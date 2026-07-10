@@ -315,6 +315,24 @@ void StageScene::SaveCubeStage() {
 	}
 }
 
+//指定番号のステージ(壁+キューブCSV)を読み込む。
+//GPUリソースの再生成はフラグ経由で次フレーム冒頭に行う(描画中破棄の回避)。
+void StageScene::LoadStage(int index) {
+	if (index < 1) index = 1;
+	if (index > kStageCount) index = kStageCount;
+	stageIndex_ = index;
+	stagePath_ = "Resources/4209_stages/stage" + std::to_string(index) + ".csv";
+	cubeStagePath_ = "Resources/4209_stages/cube" + std::to_string(index) + ".csv";
+
+	StageLoader loader;
+	csvData_ = loader.Load(stagePath_);
+	cubeCsvData_ = loader.Load(cubeStagePath_);
+
+	cleared_ = false;
+	rebuildRequested_ = true;
+	applyCubeState_ = true;
+}
+
 //cubeCsvData_ をキューブの先端配置として適用する
 void StageScene::ApplyCubeCsv() {
 	if (cubeCsvData_.empty() || !rubikCube_) return;
@@ -337,8 +355,12 @@ void StageScene::CheckClear() {
 	if (cleared_ || editorEnabled_) return;
 
 	if (StageClear::IsClear(rubikCube_->GetState(), required_)) {
-		cleared_ = true;
-		SceneManager::GetInstance()->ChangeScene(CLEAR);
+		// 最終ステージをクリアしたら CLEAR シーンへ。
+		// それ以外は自動遷移せず、HUD の「Next Stage」で次へ進む。
+		if (stageIndex_ >= kStageCount) {
+			cleared_ = true;
+			SceneManager::GetInstance()->ChangeScene(CLEAR);
+		}
 	}
 }
 
@@ -380,24 +402,36 @@ void StageScene::UpdateCamera() {
 void StageScene::DrawHud() {
 	const SixCube& cur = rubikCube_->GetState();
 
-	// 未達の穴(先端で塞がれていない穴)の数
+	// 形状まで一致していない穴の数(位置+形状)
 	int remain = 0;
 	for (int i = 0; i < 6; i++)
 		for (int r = 0; r < 3; r++)
 			for (int c = 0; c < 3; c++)
-				if (required_.oneCube[i].cube[r][c] >= 1 && cur.oneCube[i].cube[r][c] == 0)
+				if (required_.oneCube[i].cube[r][c] >= 1 &&
+					cur.oneCube[i].cube[r][c] != required_.oneCube[i].cube[r][c])
 					remain++;
 	bool clear = (remain == 0);
 
 	ImGui::Begin("HUD");
+	ImGui::Text("Stage: %d / %d", stageIndex_, kStageCount);
+	if (ImGui::Button("< Prev")) { LoadStage(stageIndex_ - 1); }
+	ImGui::SameLine();
+	if (ImGui::Button("Next >")) { LoadStage(stageIndex_ + 1); }
+	ImGui::Separator();
 	if (clear) {
 		ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1), "STATE: CLEAR!");
+		if (stageIndex_ < kStageCount) {
+			if (ImGui::Button("Next Stage >>")) { LoadStage(stageIndex_ + 1); }
+		}
+		else {
+			ImGui::TextDisabled("(final stage - turn off Editor Mode to finish)");
+		}
 	}
 	else {
 		ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1), "STATE: not clear");
 	}
-	ImGui::Text("Unfilled holes : %d", remain);
-	ImGui::Text("Cube moves     : %d", moveCount_);
+	ImGui::Text("Unmatched holes : %d", remain);
+	ImGui::Text("Cube moves      : %d", moveCount_);
 	ImGui::Separator();
 	ImGui::Text("[Cube controls]");
 	ImGui::BulletText("R : change rotation axis (X/Y/Z)");
@@ -503,7 +537,7 @@ void StageScene::DrawEditor() {
 void StageScene::DrawCubeEditor() {
 	ImGui::Begin("Cube Tip Editor");
 
-	ImGui::TextWrapped("Click a cell to toggle a tip (Empty <-> Tip)");
+	ImGui::TextWrapped("Click a cell to cycle tip: Empty -> Cone -> Square");
 	ImGui::Text("File: %s", cubeStagePath_.c_str());
 
 	if (ImGui::Button("Save Cube CSV")) {
@@ -517,7 +551,8 @@ void StageScene::DrawCubeEditor() {
 	}
 
 	ImGui::Separator();
-	ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1), "1:Tip");
+	ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.2f, 1), "2:Cone(C)");
+	ImGui::SameLine(); ImGui::TextColored(ImVec4(0.2f, 0.4f, 1.0f, 1), "3:Square(S)");
 	ImGui::Separator();
 
 	const float cell = 26.0f;
@@ -533,18 +568,25 @@ void StageScene::DrawCubeEditor() {
 			}
 
 			int v = cubeCsvData_[y][x];
-			ImVec4 col = (v >= 1) ? ImVec4(1.0f, 0.8f, 0.2f, 1)   // 先端あり
-			                      : ImVec4(0.15f, 0.15f, 0.15f, 1); // 空
+			ImVec4 col;
+			switch (v) {
+			case 2:  col = ImVec4(0.2f, 0.8f, 0.2f, 1); break;   // Cone
+			case 3:  col = ImVec4(0.2f, 0.4f, 1.0f, 1); break;   // Square
+			default: col = ImVec4(0.15f, 0.15f, 0.15f, 1); break; // 空
+			}
 
 			ImGui::PushStyleColor(ImGuiCol_Button, col);
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, col);
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, col);
 
-			std::string label = (v >= 1) ? "T" : "";
+			std::string label = (v == 2) ? "C" : (v == 3) ? "S" : "";
 			label += "##cube" + std::to_string(y) + "_" + std::to_string(x);
 
 			if (ImGui::Button(label.c_str(), ImVec2(cell, cell))) {
-				cubeCsvData_[y][x] = (v >= 1) ? 0 : 1; // 先端の有無をトグル
+				// 空 -> Cone(2) -> Square(3) -> 空 …(壁CSVと同じ形状エンコード)
+				if (v == 2) cubeCsvData_[y][x] = 3;
+				else if (v == 3) cubeCsvData_[y][x] = 0;
+				else cubeCsvData_[y][x] = 2;
 				changed = true;
 			}
 			ImGui::PopStyleColor(3);

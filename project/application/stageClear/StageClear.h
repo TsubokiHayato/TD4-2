@@ -58,4 +58,8 @@ private:
 
     /// FaceType → 面法線が一致するルービック面インデックス
     static int FaceToCubeIndex(FaceType face);
+
+    /// HoleType → 形状ID (Cone=1 / Square=2 / それ以外=0)。
+    /// キューブ先端・穴・描画で同じIDを共有する。
+    static int ShapeOf(HoleType type);
 };

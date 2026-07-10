@@ -121,9 +121,19 @@ void RubikCube::Update() {
 	for (int i = 0; i < 6; i++) {
 		for (int y = -1; y <= 1; y++) {
 			for (int x = -1; x <= 1; x++) {
-				if (sixCube_.oneCube[i].cube[1 + y][1 + x] >= 1) {
+				uint32_t shape = sixCube_.oneCube[i].cube[1 + y][1 + x];
+				if (shape >= 1) {
 					std::unique_ptr<TuboEngine::Object3d> object = std::make_unique<TuboEngine::Object3d>();
-					object->Initialize("tip/tip.obj");
+					// 形状ID(1=Cone / 2=Square)に応じて先端モデルを切り替える
+					if (shape == 1) {
+						object->Initialize("cone/cone.obj");
+					}
+					else if (shape == 2) {
+						object->Initialize("square/square.obj");
+					}
+					else {
+						object->Initialize("tip/tip.obj");
+					}
 					object->SetCamera(camera_);
 
 					if (i == 0) {

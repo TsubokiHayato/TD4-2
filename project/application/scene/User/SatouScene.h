@@ -81,6 +81,20 @@ private:
 	/// </summary>
 	void CameraRotation();
 
+	/// <summary>
+	/// csvファイルに現在のstageDataを保存
+	/// </summary>
+	void SaveCSV(const std::string& fileName);
+
+	/// <summary>
+	/// csvファイルの一覧を読み込む
+	/// </summary>
+	void RefreshCSVList();
+
+	/// <summary>
+	/// csvファイルを読み込む
+	/// </summary>
+	void LoadCSV(const std::string& fileName);
 private:
 	// メインカメラ
 	std::unique_ptr<TuboEngine::Camera> camera_;
@@ -122,4 +136,13 @@ private:
 	bool isTransparent_ = false;
 	float wallAlpha_;
 	float alpha_ = 0.2f;
+
+	// CSV保存用のファイル名
+	std::string fileName_ = "stage1";
+	char fileNameBuffer_[64] = "stage1";
+
+	std::vector<std::string> csvFiles_;
+	int selectedFileIndex_ = -1;
+
+	bool editFileName_ = false;
 };

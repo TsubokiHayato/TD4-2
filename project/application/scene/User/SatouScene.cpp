@@ -3,6 +3,10 @@
 #include "SceneManager.h" // シーン遷移を使うとき用
 #include <StageBuilder.h>
 #include <Input.h>
+#include <fstream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 void SatouScene::Initialize() {
 	// 最低限のカメラ
@@ -29,6 +33,7 @@ void SatouScene::Initialize() {
 
 	// 各セル座標に応じた3Dオブジェクトを生成・初期配置する
 	CreateWalls();
+	RefreshCSVList();
 }
 
 void SatouScene::Update() {
@@ -85,6 +90,48 @@ void SatouScene::ImGuiDraw() {
 
 	// --- ステージ構造の可視化とエディタ ---
 	ImGui::Begin("Stage Map");
+	ImGui::PushItemWidth(100);
+
+	ImGui::InputText(
+		"##FileName",
+		fileNameBuffer_,
+		sizeof(fileNameBuffer_));
+
+	ImGui::PopItemWidth();
+
+	ImGui::SameLine();
+	const char* preview =
+		strlen(fileNameBuffer_) > 0 ? fileNameBuffer_ : "Select Stage";
+
+	if (ImGui::BeginCombo("##StageList", preview))
+	{
+		for (int i = 0; i < csvFiles_.size(); i++)
+		{
+			bool selected = strcmp(fileNameBuffer_, csvFiles_[i].c_str()) == 0;
+
+			if (ImGui::Selectable(csvFiles_[i].c_str(), selected))
+			{
+				strcpy_s(fileNameBuffer_, sizeof(fileNameBuffer_), csvFiles_[i].c_str());
+				// 選択した瞬間ロード
+				LoadCSV(csvFiles_[i]);
+			}
+
+			if (selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+
+		ImGui::EndCombo();
+	}
+	if (ImGui::Button("Save")) {
+		SaveCSV(fileNameBuffer_);
+		RefreshCSVList();
+	}
+	/*if (ImGui::Button("Load"))
+	{
+		LoadCSV(fileNameBuffer_);
+	}*/
 
 	const float cellSize = 30.0f;
 
@@ -319,4 +366,68 @@ void SatouScene::CameraRotation()
 	// カメラの位置と回転を設定
 	camera_->SetTranslate(pos);
 	camera_->setRotation({ pitch_,yaw_ + 3.141592f,0.0f });
+}
+
+void SatouScene::SaveCSV(const std::string& fileName)
+{
+	std::string path = "Resources/4209_stages/" + fileName + ".csv";
+
+	std::ofstream file(path);
+
+	if (!file.is_open()) {
+		return;
+	}
+
+	for (size_t y = 0; y < csvData_.size(); y++) {
+
+		for (size_t x = 0; x < csvData_[y].size(); x++) {
+
+			file << csvData_[y][x];
+
+			if (x + 1 != csvData_[y].size()) {
+				file << ",";
+			}
+		}
+
+		file << '\n';
+	}
+
+	file.close();
+}
+
+void SatouScene::RefreshCSVList()
+{
+	csvFiles_.clear();
+
+	for (const auto& entry : fs::directory_iterator("Resources/4209_stages"))
+	{
+		if (entry.path().extension() == ".csv")
+		{
+			csvFiles_.push_back(entry.path().stem().string());
+		}
+	}
+
+	std::sort(csvFiles_.begin(), csvFiles_.end());
+}
+
+void SatouScene::LoadCSV(const std::string& fileName)
+{
+	StageLoader loader;
+
+	csvData_ = loader.Load("Resources/4209_stages/" + fileName + ".csv");
+
+	int height = static_cast<int>(csvData_.size());
+	int width = static_cast<int>(csvData_[0].size());
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+
+			int idx = Index(x, y);
+
+			cellObjects_[idx].type = csvData_[y][x];
+			cellObjects_[idx].isActive = (csvData_[y][x] != 0);
+		}
+	}
+
+	RebuildWalls();
 }

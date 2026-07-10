@@ -37,6 +37,8 @@ public:
 	void CheckClear();
 	//注視点(キューブ中心)を回るオービットカメラの更新
 	void UpdateCamera();
+	//クリア状態・操作状況を分かりやすく表示するHUD
+	void DrawHud();
 
 	//レベルエディター(ImGui で壁CSVを直接編集)
 	void DrawEditor();
@@ -67,6 +69,9 @@ private:
 	bool editorEnabled_ = true;                                       // クリア判定を止めて編集に集中
 	bool rebuildRequested_ = false;                                   // 次フレームで壁を作り直す(描画中の破棄回避)
 	bool applyCubeState_ = false;                                     // 次フレームでキューブ先端をCSVから再適用
+	SixCube prevCubeState_{};                                         // 前フレームのキューブ状態(操作検知用)
+	bool prevCubeStateValid_ = false;                                 // prevCubeState_ が有効か
+	int moveCount_ = 0;                                               // キューブ状態が変化した回数(操作が効いた回数)
 	std::string stagePath_ = "Resources/4209_stages/stage1.csv";     // 壁CSVのパス
 	std::string cubeStagePath_ = "Resources/4209_stages/cube1.csv";  // キューブCSVのパス
 
@@ -86,7 +91,7 @@ private:
 	TuboEngine::Math::Vector3 camTarget_ = { 0.0f, 0.0f, 0.0f };
 	float camYaw_ = 0.6f;
 	float camPitch_ = 0.5f;
-	float camDistance_ = 12.0f;
+	float camDistance_ = 8.0f;
 	float camRotateSpeed_ = 0.03f;
 
 	const float PI = 3.1415926f;

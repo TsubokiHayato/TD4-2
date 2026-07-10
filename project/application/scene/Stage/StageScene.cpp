@@ -62,6 +62,23 @@ void StageScene::Update() {
 
 	// パズル本体(キューブ操作＋クリア判定)
 	rubikCube_->Update();
+
+	// キューブ状態の変化を検知して操作カウンタを進める(操作が効いたか可視化)
+	{
+		const SixCube& now = rubikCube_->GetState();
+		if (prevCubeStateValid_) {
+			bool changed = false;
+			for (int i = 0; i < 6 && !changed; i++)
+				for (int r = 0; r < 3 && !changed; r++)
+					for (int c = 0; c < 3 && !changed; c++)
+						if (now.oneCube[i].cube[r][c] != prevCubeState_.oneCube[i].cube[r][c])
+							changed = true;
+			if (changed) moveCount_++;
+		}
+		prevCubeState_ = now;
+		prevCubeStateValid_ = true;
+	}
+
 	CheckClear();
 
 		//キューブの回転アニメーション
@@ -114,6 +131,8 @@ void StageScene::SpriteDraw() {
 
 }    // TODO: 2Dスプライト描画
 void StageScene::ImGuiDraw() {
+	//クリア状態・操作状況のHUD(最優先で分かりやすく)
+	DrawHud();
 	//UIクラスのデバッグ
 	ui_->Debug();
 	//ルービックキューブのデバッグ
@@ -355,6 +374,57 @@ void StageScene::UpdateCamera() {
 	camera_->SetTranslate(pos);
 	camera_->setRotation({ camPitch_, camYaw_, 0.0f });
 	camera_->Update();
+}
+
+//クリア状態・操作状況を分かりやすく表示するHUD
+void StageScene::DrawHud() {
+	const SixCube& cur = rubikCube_->GetState();
+
+	// 未達の穴(先端で塞がれていない穴)の数
+	int remain = 0;
+	for (int i = 0; i < 6; i++)
+		for (int r = 0; r < 3; r++)
+			for (int c = 0; c < 3; c++)
+				if (required_.oneCube[i].cube[r][c] >= 1 && cur.oneCube[i].cube[r][c] == 0)
+					remain++;
+	bool clear = (remain == 0);
+
+	ImGui::Begin("HUD");
+	if (clear) {
+		ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1), "STATE: CLEAR!");
+	}
+	else {
+		ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1), "STATE: not clear");
+	}
+	ImGui::Text("Unfilled holes : %d", remain);
+	ImGui::Text("Cube moves     : %d", moveCount_);
+	ImGui::Separator();
+	ImGui::Text("[Cube controls]");
+	ImGui::BulletText("R : change rotation axis (X/Y/Z)");
+	ImGui::BulletText("A / D : change row (0-2)");
+	ImGui::BulletText("Q / E : direction (0 / 1)");
+	ImGui::BulletText("SPACE : rotate selected slice");
+	ImGui::TextDisabled("(current axis/row: see 'Rubik Cube' window)");
+	ImGui::Separator();
+	ImGui::Text("[Camera] arrow keys : orbit");
+	ImGui::Checkbox("Editor Mode (block clear transition)", &editorEnabled_);
+	ImGui::End();
+
+	// クリア時は画面中央に大きく表示
+	if (clear) {
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::SetNextWindowPos(
+			ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.30f),
+			ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs |
+			ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_AlwaysAutoResize;
+		ImGui::Begin("ClearOverlay", nullptr, flags);
+		ImGui::SetWindowFontScale(3.0f);
+		ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1), "*** CLEAR! ***");
+		ImGui::SetWindowFontScale(1.0f);
+		ImGui::End();
+	}
 }
 
 //レベルエディター(ImGui でCSVを直接編集)

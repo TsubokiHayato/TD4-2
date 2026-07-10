@@ -7,6 +7,8 @@
 #include <Object3d.h>
 #include <WallData.h>
 #include <DebugCamera.h>
+#include <Vector3.h>
+using namespace TuboEngine::Math;
 
 using namespace TuboEngine;
 
@@ -74,6 +76,11 @@ private:
 	/// </summary>
 	void UpdateWallTransform();
 
+	/// <summary>
+	/// カメラの回転処理
+	/// </summary>
+	void CameraRotation();
+
 private:
 	// メインカメラ
 	std::unique_ptr<TuboEngine::Camera> camera_;
@@ -103,4 +110,16 @@ private:
 	float stageCellSize_ = 2.0f;
 	float wallThickness_ = 0.2f;
 	float cubeMargin_ = 5.0f;
+
+	Vector3 target_ = { 0.0f,0.0f,0.0f };
+
+	float targetRadius_ = 20.0f;
+
+	float yaw_ = 0.0f;      // 左右
+	float pitch_ = 0.0f;    // 上下
+
+	// 壁の透明化フラグ
+	bool isTransparent_ = false;
+	float wallAlpha_;
+	float alpha_ = 0.2f;
 };

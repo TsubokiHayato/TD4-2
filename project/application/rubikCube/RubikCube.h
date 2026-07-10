@@ -27,6 +27,16 @@ public:
 	/// </summary>
 	void Debug();
 
+	/// <summary>
+	/// 現在の先端配置を取得する(クリア判定用の読み取り専用アクセサ)。
+	/// </summary>
+	const SixCube& GetState() const { return sixCube_; }
+
+	/// <summary>
+	/// 先端配置を外部から設定する(CSV/エディターでの初期配置用)。
+	/// </summary>
+	void SetState(const SixCube& state) { sixCube_ = state; }
+
 private:
 
 	SixCube sixCube_;

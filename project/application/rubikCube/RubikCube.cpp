@@ -126,7 +126,7 @@ void RubikCube::Update() {
 					std::unique_ptr<TuboEngine::Object3d> object = std::make_unique<TuboEngine::Object3d>();
 					// 形状ID(1=Cone / 2=Square)に応じて先端モデルを切り替える
 					if (shape == 1) {
-						object->Initialize("cone/cone.obj");
+						object->Initialize("tip/tip.obj");
 					}
 					else if (shape == 2) {
 						object->Initialize("square/square.obj");

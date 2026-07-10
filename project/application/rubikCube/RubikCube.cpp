@@ -70,6 +70,14 @@ void RubikCube::Initialize(TuboEngine::Camera* camera) {
 
 void RubikCube::Update() {
 
+	if (isRotating_) {
+		UpdateRotationAnimation();
+
+		for (auto& object : objects_)object->Update();
+		for (auto& tip : tips_)tip->Update();
+		return;
+	}
+
 	//向きを変更するのは全9方向
 
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_R)) {
@@ -77,12 +85,15 @@ void RubikCube::Update() {
 
 		if (rotateDirectionNum_ == 0) {
 			rubikCubeState_ = std::make_unique<RotationYState>();
+			currentAxis_ = RotationAxis::Y;
 		}
 		else if (rotateDirectionNum_ == 1) {
 			rubikCubeState_ = std::make_unique<RotationZState>();
+			currentAxis_ = RotationAxis::Z;
 		}
 		else if (rotateDirectionNum_ == 2) {
 			rubikCubeState_ = std::make_unique<RotationXState>();
+			currentAxis_ = RotationAxis::X;
 		}
 		rotateDirectionNum_++;
 		if (rotateDirectionNum_ > 2) {
@@ -99,7 +110,16 @@ void RubikCube::Update() {
 
 
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_SPACE)) {
-		rubikCubeState_->Rotation(sixCube_, row_,rotation_);
+		//rubikCubeState_->Rotation(sixCube_, row_,rotation_);
+		StartRotationAnimation();
+		for (auto& object : objects_) {
+			object->Update();
+		}
+
+		for (auto& tip : tips_) {
+			tip->Update();
+		}
+		return;
 	}
 
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_A)) {
@@ -163,8 +183,6 @@ void RubikCube::Update() {
 
 
 
-
-
 	for (auto& object : objects_) {
 		object->Update();
 	}
@@ -187,9 +205,12 @@ void RubikCube::Debug() {
 
 	ImGui::Begin("Rubik Cube");
 
-	ImGui::Text("Row: %d", row_);
+	const char* axisNames[] = { "X", "Y", "Z" };
+	ImGui::Text("CurrentAxis: %s", axisNames[static_cast<int>(currentAxis_)]);
+	ImGui::Text("Row (0-2): %d", row_);
+	ImGui::Text("Rotation: %d", rotation_);
 	ImGui::Text("RotateDirectionNum: %d", rotateDirectionNum_);
-
+		
 	ImGui::Separator();
 
 	for (int masume = 0; masume < 6; masume++) {
@@ -203,4 +224,163 @@ void RubikCube::Debug() {
 
 }
 
+void RubikCube::StartRotationAnimation() {
 
+	rotatingObjects_.clear();
+	rotatingInitialPos_.clear();
+
+	//row_(0~2)をワールド座標(-1~1)に変換
+	float targetCoord = (float(row_) - 1.0f) * GetRowSign(currentAxis_);
+
+	auto collectTarget = [&](TuboEngine::Object3d* object) {
+		TuboEngine::Math::Vector3 pos = object->GetPosition();
+
+		float coord = 0.0f;
+		if (currentAxis_ == RotationAxis::X) coord = pos.x;
+		else if (currentAxis_ == RotationAxis::Y) coord = pos.y;
+		else coord = pos.z;
+
+		if (std::abs(coord - targetCoord) < 0.5f) {
+			rotatingObjects_.push_back(object);
+			rotatingInitialPos_.push_back(pos);
+			rotatingInitialRot_.push_back(object->GetRotation());
+		}
+		};
+
+	for (auto& object : objects_) {
+		collectTarget(object.get());
+	}
+
+	for (auto& tip : tips_) {
+		collectTarget(tip.get());
+	}
+
+	isRotating_ = true;
+	rotateAngle_ = 0.0f;
+}
+
+void RubikCube::UpdateRotationAnimation() {
+
+	float baseSign = (rotation_ == 1) ? 1.0f : -1.0f;
+	float sign = baseSign * GetRotationSign(currentAxis_);
+	rotateAngle_ += kRotateSpeedRad_;
+
+	float angle = sign * rotateAngle_;
+
+	for (size_t i = 0; i < rotatingObjects_.size(); i++) {
+		TuboEngine::Math::Vector3 newPos = RotateAroundAxis(rotatingInitialPos_[i], currentAxis_, angle);
+		rotatingObjects_[i]->SetPosition(newPos);
+
+		//回転も初期値から毎フレーム合成し直す(累積加算しない)
+		Mat3 initialMat = EulerToMat3(rotatingInitialRot_[i]);
+		Mat3 axisMat = AxisRotationMat3(currentAxis_, angle);
+		Mat3 newMat = Mat3Mul(axisMat, initialMat);//ワールド軸回転なので前から掛ける
+		rotatingObjects_[i]->SetRotation(Mat3ToEuler(newMat));
+	}
+
+	if (rotateAngle_ >= float(M_PI) / 2.0f) {
+		rubikCubeState_->Rotation(sixCube_, row_, rotation_);
+
+		//位置・回転をスナップ(問題2の対策、後述)
+		for (auto* obj : rotatingObjects_) {
+			TuboEngine::Math::Vector3 p = obj->GetPosition();
+			p.x = std::round(p.x); p.y = std::round(p.y); p.z = std::round(p.z);
+			obj->SetPosition(p);
+		}
+
+		isRotating_ = false;
+		rotateAngle_ = 0.0f;
+		rotatingObjects_.clear();
+		rotatingInitialPos_.clear();
+		rotatingInitialRot_.clear();
+	}
+}
+
+TuboEngine::Math::Vector3 RubikCube::RotateAroundAxis(const TuboEngine::Math::Vector3& pos, RotationAxis axis, float angle) {
+	float c = cosf(angle);
+	float s = sinf(angle);
+	TuboEngine::Math::Vector3 result = pos;
+
+	switch (axis) {
+	case RotationAxis::X:
+		result.y = pos.y * c - pos.z * s;
+		result.z = pos.y * s + pos.z * c;
+		break;
+	case RotationAxis::Y:
+		result.x = pos.x * c + pos.z * s;
+		result.z = -pos.x * s + pos.z * c;
+		break;
+	case RotationAxis::Z:
+		result.x = pos.x * c - pos.y * s;
+		result.y = pos.x * s + pos.y * c;
+		break;
+	}
+	return result;
+}
+
+RubikCube::Mat3 RubikCube::AxisRotationMat3(RotationAxis axis, float angle) {
+	float c = cosf(angle), s = sinf(angle);
+	Mat3 r = {};
+	switch (axis) {
+	case RotationAxis::X:
+		r.m[0][0] = 1; r.m[1][1] = c; r.m[1][2] = -s; r.m[2][1] = s; r.m[2][2] = c;
+		break;
+	case RotationAxis::Y:
+		r.m[1][1] = 1; r.m[0][0] = c; r.m[0][2] = s; r.m[2][0] = -s; r.m[2][2] = c;
+		break;
+	case RotationAxis::Z:
+		r.m[2][2] = 1; r.m[0][0] = c; r.m[0][1] = -s; r.m[1][0] = s; r.m[1][1] = c;
+		break;
+	}
+	return r;
+}
+
+RubikCube::Mat3 RubikCube::Mat3Mul(const Mat3& a, const Mat3& b) {
+	Mat3 r = {};
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			for (int k = 0; k < 3; k++)
+				r.m[i][j] += a.m[i][k] * b.m[k][j];
+	return r;
+}
+
+// 注意:Object3dが内部でどの順序(X*Y*Z等)でオイラー角を合成しているかに依存します。
+// ここではZ*Y*X(一般的な順序の一つ)を仮定しています。見た目がおかしい場合は順序を調整してください。
+RubikCube::Mat3 RubikCube::EulerToMat3(const TuboEngine::Math::Vector3& euler) {
+	Mat3 rx = AxisRotationMat3(RotationAxis::X, euler.x);
+	Mat3 ry = AxisRotationMat3(RotationAxis::Y, euler.y);
+	Mat3 rz = AxisRotationMat3(RotationAxis::Z, euler.z);
+	return Mat3Mul(Mat3Mul(rz, ry), rx);
+}
+
+TuboEngine::Math::Vector3 RubikCube::Mat3ToEuler(const Mat3& m) {
+	TuboEngine::Math::Vector3 e;
+	e.y = asinf(-m.m[2][0]);
+	if (cosf(e.y) > 0.0001f) {
+		e.x = atan2f(m.m[2][1], m.m[2][2]);
+		e.z = atan2f(m.m[1][0], m.m[0][0]);
+	}
+	else {
+		e.x = atan2f(-m.m[1][2], m.m[1][1]);
+		e.z = 0.0f;
+	}
+	return e;
+}
+
+float RubikCube::GetRowSign(RotationAxis axis) {
+	switch (axis) {
+	case RotationAxis::X: return 1.0f;
+	case RotationAxis::Y: return -1.0f;
+	case RotationAxis::Z: return -1.0f;
+	}
+	return 1.0f;
+}
+
+float RubikCube::GetRotationSign(RotationAxis axis) {
+	switch (axis) {
+	case RotationAxis::X: return 1.0f;
+	case RotationAxis::Y: return -1.0f;
+	case RotationAxis::Z: return -1.0f;
+	}
+	return 1.0f;
+}

@@ -80,12 +80,12 @@ private:
 	// 壁生成パラメータ(先端 ±1 の外側に穴が来るよう調整)
 	// RubikCube はグリッド間隔1・OneCube(2ユニット)を0.3倍で配置しているため、
 	// 壁グリッドも間隔1(cellSize=1)に合わせる。
-	float stageCellSize_ = 1.0f;
-	float wallThickness_ = 0.2f;
-	float cubeMargin_ = 0.0f;
+	float stageCellSize_ = 1.0f;   // グリッド間隔
+	float wallThickness_ = 3.0f;   // 壁の押し出し距離(surfaceOffset に加算)
+	float cubeMargin_ = 0.0f;      // キューブと壁の追加距離
 	// 壁/穴モデルは実寸2ユニット。タイル同士が重ならないよう cellSize より
 	// 小さめの見た目にする(=一定間隔あく)。グリッド間隔(cellSize)とは分離。
-	float wallScale_ = 0.4f;
+	float wallScale_ = 0.5f;       // タイルの見た目サイズ
 
 	// --- オービットカメラ ---
 	TuboEngine::Math::Vector3 camTarget_ = { 0.0f, 0.0f, 0.0f };

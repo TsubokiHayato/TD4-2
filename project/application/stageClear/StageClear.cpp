@@ -56,6 +56,44 @@ StageClear::Coord StageClear::HoleToCoord(FaceType face, GridPos local, int cube
     return { 0, 0, 0 };
 }
 
+void StageClear::CellToCoord(int face, int row, int col, int outCoord[3]) {
+    Coord c = CubeCellToCoord(face, row, col);
+    outCoord[0] = c.x; outCoord[1] = c.y; outCoord[2] = c.z;
+}
+
+void StageClear::FaceNormal(int face, int outNormal[3]) {
+    // CubeCellToCoord の固定成分と一致する面法線。
+    // 0:+Y / 1:-X / 2:-Z / 3:+X / 4:-Y / 5:+Z
+    static const int n[6][3] = {
+        { 0, 1, 0}, {-1, 0, 0}, { 0, 0,-1},
+        { 1, 0, 0}, { 0,-1, 0}, { 0, 0, 1},
+    };
+    outNormal[0] = n[face][0]; outNormal[1] = n[face][1]; outNormal[2] = n[face][2];
+}
+
+int StageClear::NormalToFace(int nx, int ny, int nz) {
+    for (int f = 0; f < 6; f++) {
+        int n[3]; FaceNormal(f, n);
+        if (n[0] == nx && n[1] == ny && n[2] == nz) return f;
+    }
+    return -1;
+}
+
+bool StageClear::CoordToCell(const int coord[3], const int normal[3], int& face, int& row, int& col) {
+    int f = NormalToFace(normal[0], normal[1], normal[2]);
+    if (f < 0) return false;
+    for (int r = 0; r < 3; r++) {
+        for (int c = 0; c < 3; c++) {
+            int cc[3]; CellToCoord(f, r, c, cc);
+            if (cc[0] == coord[0] && cc[1] == coord[1] && cc[2] == coord[2]) {
+                face = f; row = r; col = c;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 SixCube StageClear::BuildRequired(const std::vector<WallData>& walls, int cubeSize) {
     SixCube required{};
     for (int i = 0; i < 6; i++) {

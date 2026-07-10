@@ -90,10 +90,11 @@ void RubikCube::Update() {
 		}
 	}
 
-	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_E)) {
+	// 回す向き(カメラのQ/Eと競合しないよう上下矢印に変更)
+	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_UP)) {
 		rotation_ = 1;
 	}
-	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_Q)) {
+	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_DOWN)) {
    		rotation_ = 0;
 	}
 
@@ -102,13 +103,14 @@ void RubikCube::Update() {
 		rubikCubeState_->Rotation(sixCube_, row_,rotation_);
 	}
 
-	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_A)) {
+	// 回す列(カメラのA/Dと競合しないよう左右矢印に変更)
+	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RIGHT)) {
 		row_++;
 		if (row_ > 2) {
 			row_ = 0;
 		}
 	}
-	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_D)) {
+	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_LEFT)) {
 		row_--;
 		if (row_ < 0) {
 			row_ = 2;

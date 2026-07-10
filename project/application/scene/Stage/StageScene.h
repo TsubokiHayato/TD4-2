@@ -35,8 +35,12 @@ public:
 	void RebuildStage();
 	//クリア判定とクリア時のシーン遷移
 	void CheckClear();
-	//注視点(キューブ中心)を回るオービットカメラの更新
-	void UpdateCamera();
+	//カメラ回転(WASDで回転・QEでズーム。SatouSceneのカメラを移植)
+	void CameraRotation();
+	//マウスドラッグでルービックキューブの面(スライス)を回す
+	void MouseCubeControl();
+	//マウスで回るスライスのプレビューと回転フラッシュを画面に描く
+	void DrawMouseGuide();
 	//クリア状態・操作状況を分かりやすく表示するHUD
 	void DrawHud();
 
@@ -79,6 +83,22 @@ private:
 	int stageIndex_ = 1;                                             // 現在のステージ番号
 	static constexpr int kStageCount = 2;                            // 用意されているステージ数
 
+	// --- マウスによるキューブ回転(3Dピッキング) ---
+	bool dragging_ = false;      // 左ドラッグ中か
+	float dragStartX_ = 0.0f;    // ドラッグ開始スクリーン位置
+	float dragStartY_ = 0.0f;
+	float dragAccumX_ = 0.0f;    // 未処理のドラッグ量
+	float dragAccumY_ = 0.0f;
+	float rotateFlash_ = 0.0f;   // 回転フィードバックの残りフレーム
+	bool pickValid_ = false;     // カーソル下にブロックがあるか
+	int pickCell_[3] = { 0,0,0 }; // 指しているブロックのセル座標(-1..1)
+	int pickNormal_[3] = { 0,0,1 }; // 指している面の法線
+	int dragPickCell_[3] = { 0,0,0 };   // ドラッグ開始時のブロック
+	int dragPickNormal_[3] = { 0,0,1 }; // ドラッグ開始時の面法線
+
+	//マウス光線でキューブのブロック(面)を拾う。取れたら true。
+	bool PickBlock(float mx, float my, int cell[3], int normal[3]);
+
 	// キューブ1辺のマス数
 	static constexpr int kCubeSize = 3;
 	// 壁生成パラメータ(先端 ±1 の外側に穴が来るよう調整)
@@ -91,12 +111,11 @@ private:
 	// 小さめの見た目にする(=一定間隔あく)。グリッド間隔(cellSize)とは分離。
 	float wallScale_ = 0.5f;       // タイルの見た目サイズ
 
-	// --- オービットカメラ ---
-	TuboEngine::Math::Vector3 camTarget_ = { 0.0f, 0.0f, 0.0f };
-	float camYaw_ = 0.6f;
-	float camPitch_ = 0.5f;
-	float camDistance_ = 8.0f;
-	float camRotateSpeed_ = 0.03f;
+	// --- オービットカメラ(SatouScene から移植: A/D=ヨー W/S=ピッチ Q/E=ズーム) ---
+	TuboEngine::Math::Vector3 target_ = { 0.0f, 0.0f, 0.0f }; // 注視点
+	float targetRadius_ = 20.0f;                             // 注視点からの距離
+	float yaw_ = 0.0f;                                       // 左右
+	float pitch_ = 0.0f;                                     // 上下
 
 	const float PI = 3.1415926f;
 	const float DEG90 = PI / 2.0f;

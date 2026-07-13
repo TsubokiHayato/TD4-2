@@ -407,37 +407,6 @@ namespace {
 float GetAxis(const TuboEngine::Math::Vector3& v, int a) {
 	return (a == 0) ? v.x : (a == 1) ? v.y : v.z;
 }
-// 整数サーフェス座標を axis 軸まわりに90°回す(dir=0/1で向き)
-void RotateCoord90(int c[3], int axis, int dir) {
-	int x = c[0], y = c[1], z = c[2];
-	if (axis == 0) {        // X軸
-		if (dir) { c[1] = -z; c[2] = y; } else { c[1] = z; c[2] = -y; }
-	}
-	else if (axis == 1) {   // Y軸
-		if (dir) { c[0] = z; c[2] = -x; } else { c[0] = -z; c[2] = x; }
-	}
-	else {                  // Z軸
-		if (dir) { c[0] = -y; c[1] = x; } else { c[0] = y; c[1] = -x; }
-	}
-}
-// axis 軸・layer 層のスライスを幾何的に90°回した SixCube を返す。
-// RubikCube の先端配置(CubeCellToCoord)と同じ座標系で回すので見た目と一致する。
-SixCube RotateSliceGeom(const SixCube& in, int axis, int layer, int dir) {
-	SixCube out = in; // スライス外のセルはそのまま
-	for (int f = 0; f < 6; f++)
-		for (int r = 0; r < 3; r++)
-			for (int col = 0; col < 3; col++) {
-				int coord[3]; StageClear::CellToCoord(f, r, col, coord);
-				if (coord[axis] != layer) continue; // スライスに含まれないセル
-				int nrm[3];  StageClear::FaceNormal(f, nrm);
-				RotateCoord90(coord, axis, dir);
-				RotateCoord90(nrm, axis, dir);
-				int f2, r2, c2;
-				if (StageClear::CoordToCell(coord, nrm, f2, r2, c2))
-					out.oneCube[f2].cube[r2][c2] = in.oneCube[f].cube[r][col];
-			}
-	return out;
-}
 } // namespace
 
 //マウス光線でキューブのブロック(面)を拾う。取れたら true。
@@ -507,6 +476,9 @@ void StageScene::MouseCubeControl() {
 
 	if (ImGui::GetIO().WantCaptureMouse) { dragging_ = false; return; }
 
+	// アニメーション中は新しい回転を受け付けない
+	if (rubikCube_->IsRotating()) { dragging_ = false; return; }
+
 	// 左押下: そのとき指していたブロックを掴む
 	if (input->IsTriggerMouse(0) && pickValid_) {
 		dragging_ = true;
@@ -557,10 +529,14 @@ void StageScene::MouseCubeControl() {
 		rotAxis = a; layer = dragPickCell_[a]; dir = (scoreB > 0.0f) ? 1 : 0;
 	}
 
-	rubikCube_->SetState(RotateSliceGeom(rubikCube_->GetState(), rotAxis, layer, dir));
-	rotateFlash_ = 40.0f;
+	// world層 → RubikCube の row_ に変換 (GetRowSign: X=+1, Y/Z=-1)
+	int row = (rotAxis == 0) ? (layer + 1) : (1 - layer);
 
-	// 連続で回せるよう累積のみリセット(掴みは維持)
+	// RubikCube の回転アニメを起動(論理更新もアニメ側で行われる)。1ドラッグ=1回転。
+	if (rubikCube_->RequestRotation(rotAxis, row, dir)) {
+		rotateFlash_ = 40.0f;
+	}
+	dragging_ = false;
 	dragAccumX_ = 0.0f; dragAccumY_ = 0.0f;
 }
 

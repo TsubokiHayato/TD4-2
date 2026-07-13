@@ -234,6 +234,29 @@ void RubikCube::Debug() {
 
 }
 //回転アニメーション開始
+bool RubikCube::RequestRotation(int axis, int row, int dir) {
+	if (isRotating_) return false;
+
+	// 回転軸と、アニメ終了時の論理更新に使う状態クラスを合わせて設定する
+	rubikCubeState_.reset();
+	if (axis == 0) {
+		currentAxis_ = RotationAxis::X;
+		rubikCubeState_ = std::make_unique<RotationXState>();
+	}
+	else if (axis == 1) {
+		currentAxis_ = RotationAxis::Y;
+		rubikCubeState_ = std::make_unique<RotationYState>();
+	}
+	else {
+		currentAxis_ = RotationAxis::Z;
+		rubikCubeState_ = std::make_unique<RotationZState>();
+	}
+	row_ = row;
+	rotation_ = 1 - dir; // ドラッグ方向と回転が逆だったので向きを反転(0<->1)
+	StartRotationAnimation();
+	return true;
+}
+
 void RubikCube::StartRotationAnimation() {
 
 	rotatingObjects_.clear();

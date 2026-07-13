@@ -45,6 +45,20 @@ public:
 	/// </summary>
 	void SetState(const SixCube& state) { sixCube_ = state; }
 
+	/// <summary>
+	/// 外部(マウス操作など)から回転アニメーションを依頼する。
+	/// アニメ中は無視して false を返す。開始できたら true。
+	/// </summary>
+	/// <param name="axis">0=X, 1=Y, 2=Z</param>
+	/// <param name="row">回す列 0～2</param>
+	/// <param name="dir">回す向き 0 or 1</param>
+	bool RequestRotation(int axis, int row, int dir);
+
+	/// <summary>
+	/// 回転アニメーション中か(入力ガード用)。
+	/// </summary>
+	bool IsRotating() const { return isRotating_; }
+
 private:
 	/// <summary>
 	// 3x3行列

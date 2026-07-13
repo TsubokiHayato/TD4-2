@@ -193,8 +193,6 @@ private:
 	//端の面
 	const uint32_t kNearAround_ = 3 + matrixNum;
 	const uint32_t kFarAround_ = 6 + matrixNum;
-
 	//回転角度 90度
 	const float kNinetyRadian_ = 90.0f * float(M_PI) / 180.0f;
 };
-

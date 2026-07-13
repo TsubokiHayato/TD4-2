@@ -8,17 +8,22 @@
 #include <StageBuilder.h>
 #include <Input.h>
 #include <ImGuiManager.h>
+#include <WinApp.h>
+#include <Matrix.h>
+#include <Vector3.h>
 #include <cmath>
+#include <algorithm>
 #include <fstream>
 #include <string>
+#include <cstdio>
 
 using namespace TuboEngine;
 
 void StageScene::Initialize() {
-	// オービットカメラ(キューブ中心を斜め上から見る)
+	// オービットカメラ(SatouScene移植: A/D回転 W/S上下 Q/Eズーム)
 	camera_ = std::make_unique<TuboEngine::Camera>();
 	camera_->setScale({ 1.0f, 1.0f, 1.0f });
-	UpdateCamera();
+	CameraRotation();
 
 	//ポーズメニューキューブの初期化
 	pauseMenuCube_ = std::make_unique<TuboEngine::Object3d>();
@@ -57,8 +62,11 @@ void StageScene::Update() {
 		applyCubeState_ = false;
 	}
 
-	// オービットカメラ(矢印キーで注視点まわりに回転)
-	UpdateCamera();
+	// オービットカメラ(A/D回転・W/S上下・Q/Eズーム)
+	CameraRotation();
+
+	// マウスドラッグでキューブの面を回す
+	MouseCubeControl();
 
 	// パズル本体(キューブ操作＋クリア判定)
 	rubikCube_->Update();
@@ -131,6 +139,8 @@ void StageScene::SpriteDraw() {
 
 }    // TODO: 2Dスプライト描画
 void StageScene::ImGuiDraw() {
+	//マウスのスライス選択プレビュー＋回転フラッシュ
+	DrawMouseGuide();
 	//クリア状態・操作状況のHUD(最優先で分かりやすく)
 	DrawHud();
 	//UIクラスのデバッグ
@@ -156,13 +166,13 @@ void StageScene::ImGuiDraw() {
 	}
 	ImGui::End();
 
-	//カメラ調整
+	//カメラ調整(A/D=回転 W/S=上下 Q/E=ズーム)
 	ImGui::Begin("Camera");
-	ImGui::Text("Arrow keys: orbit");
-	ImGui::SliderFloat("Yaw", &camYaw_, -3.14159f, 3.14159f);
-	ImGui::SliderFloat("Pitch", &camPitch_, -1.4f, 1.4f);
-	ImGui::DragFloat("Distance", &camDistance_, 0.1f, 1.0f, 60.0f);
-	ImGui::DragFloat3("Target", &camTarget_.x, 0.1f);
+	ImGui::Text("A/D: rotate  W/S: up-down  Q/E: zoom");
+	ImGui::SliderFloat("Yaw", &yaw_, -3.14159f, 3.14159f);
+	ImGui::SliderFloat("Pitch", &pitch_, -1.4f, 1.4f);
+	ImGui::DragFloat("Radius(zoom)", &targetRadius_, 0.1f, 3.0f, 50.0f);
+	ImGui::DragFloat3("Target", &target_.x, 0.1f);
 	ImGui::End();
 	//TextManager
 	TuboEngine::TextManager::GetInstance()->DrawImGui();
@@ -365,37 +375,274 @@ void StageScene::CheckClear() {
 }
 
 //注視点(キューブ中心)を回るオービットカメラの更新
-void StageScene::UpdateCamera() {
+//カメラ回転(SatouScene から移植: A/D=ヨー W/S=ピッチ Q/E=ズーム、球面座標)
+void StageScene::CameraRotation() {
 	Input* input = Input::GetInstance();
 
-	// 矢印キーで注視点まわりに回転(WASDはキューブ操作が使用中のため矢印に割当)
-	if (input->PushKey(DIK_LEFT))  camYaw_ -= camRotateSpeed_;
-	if (input->PushKey(DIK_RIGHT)) camYaw_ += camRotateSpeed_;
-	if (input->PushKey(DIK_UP))    camPitch_ += camRotateSpeed_;
-	if (input->PushKey(DIK_DOWN))  camPitch_ -= camRotateSpeed_;
+	const float speed = 0.02f;
+	if (input->PushKey(DIK_A)) yaw_ += speed;
+	if (input->PushKey(DIK_D)) yaw_ -= speed;
+	if (input->PushKey(DIK_W)) pitch_ += speed;
+	if (input->PushKey(DIK_S)) pitch_ -= speed;
+	pitch_ = std::clamp(pitch_, -1.4f, 1.4f);
 
-	// 真上/真下でのフリップを防ぐ
-	const float kPitchLimit = 1.4f;
-	if (camPitch_ > kPitchLimit)  camPitch_ = kPitchLimit;
-	if (camPitch_ < -kPitchLimit) camPitch_ = -kPitchLimit;
+	const float zoomSpeed = 0.3f;
+	if (input->PushKey(DIK_Q)) targetRadius_ += zoomSpeed;
+	if (input->PushKey(DIK_E)) targetRadius_ -= zoomSpeed;
+	targetRadius_ = std::clamp(targetRadius_, 3.0f, 50.0f);
 
-	// 前方 = ローカル+Z を Rx(pitch)*Ry(yaw) で回したもの。
-	// 注視点の後方 distance にカメラを置く。
-	float cp = std::cos(camPitch_);
-	float sp = std::sin(camPitch_);
-	float cy = std::cos(camYaw_);
-	float sy = std::sin(camYaw_);
-	TuboEngine::Math::Vector3 forward = { cp * sy, -sp, cp * cy };
-
-	TuboEngine::Math::Vector3 pos = {
-		camTarget_.x - forward.x * camDistance_,
-		camTarget_.y - forward.y * camDistance_,
-		camTarget_.z - forward.z * camDistance_,
-	};
+	// 球面座標からカメラ位置を計算
+	TuboEngine::Math::Vector3 pos;
+	pos.x = target_.x + targetRadius_ * std::cos(pitch_) * std::sin(yaw_);
+	pos.y = target_.y + targetRadius_ * std::sin(pitch_);
+	pos.z = target_.z + targetRadius_ * std::cos(pitch_) * std::cos(yaw_);
 
 	camera_->SetTranslate(pos);
-	camera_->setRotation({ camPitch_, camYaw_, 0.0f });
+	camera_->setRotation({ pitch_, yaw_ + 3.141592f, 0.0f });
 	camera_->Update();
+}
+
+namespace {
+// Vector3 の成分をインデックス(0=x,1=y,2=z)で取得
+float GetAxis(const TuboEngine::Math::Vector3& v, int a) {
+	return (a == 0) ? v.x : (a == 1) ? v.y : v.z;
+}
+// RubikCube::GetRotationSign と同じ(X:+1 / Y,Z:-1)
+float RotationSignOf(int axis) { return (axis == 0) ? 1.0f : -1.0f; }
+// RubikCube::RotateAroundAxis と同じ回転(点posをaxis周りにangle回す)
+TuboEngine::Math::Vector3 RotateAroundAxisLocal(const TuboEngine::Math::Vector3& pos, int axis, float angle) {
+	float c = std::cos(angle), s = std::sin(angle);
+	TuboEngine::Math::Vector3 r = pos;
+	if (axis == 0) {        // X
+		r.y = pos.y * c - pos.z * s;
+		r.z = pos.y * s + pos.z * c;
+	}
+	else if (axis == 1) {   // Y
+		r.x = pos.x * c + pos.z * s;
+		r.z = -pos.x * s + pos.z * c;
+	}
+	else {                  // Z
+		r.x = pos.x * c - pos.y * s;
+		r.y = pos.x * s + pos.y * c;
+	}
+	return r;
+}
+} // namespace
+
+//カーソルに最も近い「前向きの面のセル」を選ぶ。
+//逆投影を使わず、各セルを前方投影(描画と同じVP)して最近傍を取るのでどのカメラ角度でも一致する。
+bool StageScene::PickBlock(float mx, float my, int cell[3], int normal[3]) {
+	using namespace TuboEngine::Math;
+	float w = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientWidth());
+	float h = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientHeight());
+
+	Matrix4x4 vp = camera_->GetViewProjectionMatrix();
+	auto project = [&](Vector3 wp, ImVec2& out) -> bool {
+		Vector3 c = TransformCoord(wp, vp);
+		// カメラ背後(w<0でTransformCoordが破綻)を弾くため、ビュー空間zで前方判定
+		Vector3 vpos = TransformCoord(wp, camera_->GetViewMatrix());
+		if (vpos.z <= 0.0f) return false; // カメラの後ろ
+		out = ImVec2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
+		return true;
+	};
+
+	Vector3 eye = camera_->GetTranslate();
+	float best = 1e30f;
+	bool found = false;
+
+	// 6面 × 面内3x3 のサーフェスセルを走査
+	for (int fa = 0; fa < 3; fa++) {
+		for (int s = -1; s <= 1; s += 2) {
+			// 前向きの面だけ対象(カメラがその面の外側にある)
+			if (s * GetAxis(eye, fa) <= 1.0f) continue;
+
+			int inplane[2], k = 0;
+			for (int ax = 0; ax < 3; ax++) if (ax != fa) inplane[k++] = ax;
+
+			for (int u = -1; u <= 1; u++) {
+				for (int v = -1; v <= 1; v++) {
+					float comp[3];
+					comp[fa] = static_cast<float>(s);
+					comp[inplane[0]] = static_cast<float>(u);
+					comp[inplane[1]] = static_cast<float>(v);
+					ImVec2 sp;
+					if (!project(Vector3{ comp[0], comp[1], comp[2] }, sp)) continue;
+					float dx = sp.x - mx, dy = sp.y - my;
+					float dist = dx * dx + dy * dy;
+					if (dist < best) {
+						best = dist;
+						found = true;
+						cell[fa] = s;
+						cell[inplane[0]] = u;
+						cell[inplane[1]] = v;
+						normal[0] = normal[1] = normal[2] = 0;
+						normal[fa] = s;
+					}
+				}
+			}
+		}
+	}
+
+	// カーソルからの許容半径(px)。これ以上遠ければキューブ外とみなす。
+	const float kPickRadius = 90.0f;
+	if (!found || best > kPickRadius * kPickRadius) return false;
+	return true;
+}
+
+//マウスで指したブロックのスライスをドラッグで回す(RubikCubeは改変せずSetStateで反映)。
+void StageScene::MouseCubeControl() {
+	Input* input = Input::GetInstance();
+	float mx = input->GetMousePosition().x;
+	float my = input->GetMousePosition().y;
+
+	// ホバー中のブロックを毎フレーム更新(ハイライト用)
+	pickValid_ = false;
+	if (!ImGui::GetIO().WantCaptureMouse) {
+		int cell[3], nrm[3];
+		if (PickBlock(mx, my, cell, nrm)) {
+			pickValid_ = true;
+			for (int i = 0; i < 3; i++) { pickCell_[i] = cell[i]; pickNormal_[i] = nrm[i]; }
+		}
+	}
+
+	if (ImGui::GetIO().WantCaptureMouse) { dragging_ = false; return; }
+
+	// 左押下: ブロックを指していたら掴む(押した瞬間のみ)
+	if (input->IsTriggerMouse(0) && pickValid_) {
+		dragging_ = true;
+		dragAccumX_ = 0.0f; dragAccumY_ = 0.0f;
+		for (int i = 0; i < 3; i++) { dragPickCell_[i] = pickCell_[i]; dragPickNormal_[i] = pickNormal_[i]; }
+	}
+	if (!input->IsPressMouse(0)) dragging_ = false; // ボタンを離したら終了
+	if (!dragging_) return;
+
+	// 掴んでいる間ドラッグ量を累積
+	Input::MouseMove mv = input->GetMouseMove();
+	dragAccumX_ += static_cast<float>(mv.lX);
+	dragAccumY_ += static_cast<float>(mv.lY);
+
+	// アニメ中は回転を発行せず「待つ」(ドラッグは維持したまま)。
+	// これで連続ドラッグ中もアニメ後に続けて回せる。
+	if (rubikCube_->IsRotating()) return;
+
+	const float kThreshold = 45.0f;
+	if (std::abs(dragAccumX_) < kThreshold && std::abs(dragAccumY_) < kThreshold) return;
+
+	// 発行直前に、今カーソルが指しているブロックへ掴みを更新(ずれ対策・連続回転用)
+	if (pickValid_) {
+		for (int i = 0; i < 3; i++) { dragPickCell_[i] = pickCell_[i]; dragPickNormal_[i] = pickNormal_[i]; }
+	}
+
+	// 掴んだ面の面内2軸(=回転軸の候補)を列挙
+	int fa = (dragPickNormal_[0] != 0) ? 0 : (dragPickNormal_[1] != 0) ? 1 : 2;
+	int cand[2], k = 0;
+	for (int ax = 0; ax < 3; ax++) if (ax != fa) cand[k++] = ax;
+
+	using namespace TuboEngine::Math;
+	float w = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientWidth());
+	float h = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientHeight());
+	Matrix4x4 vp = camera_->GetViewProjectionMatrix();
+	auto project = [&](Vector3 wpt) -> ImVec2 {
+		Vector3 c = TransformCoord(wpt, vp);
+		return ImVec2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
+	};
+
+	// 掴んだブロックの中心と、そのスクリーン位置
+	Vector3 center = { (float)dragPickCell_[0], (float)dragPickCell_[1], (float)dragPickCell_[2] };
+	ImVec2 sc = project(center);
+
+	// 「回転軸×向き」の各候補で、実際にエンジンが回したときブロックが画面上で
+	// どちらへ動くかをシミュレートし、ドラッグ方向に最も一致する候補を選ぶ。
+	// これによりカメラの向き・掴んだ面に関係なく見た目通りに回る。
+	const float kEps = 0.15f;
+	int rotAxis = cand[0], dir = 0;
+	float best = -1e30f;
+	for (int ci = 0; ci < 2; ci++) {
+		int axis = cand[ci];
+		for (int d = 0; d < 2; d++) {
+			// エンジンの回転角の符号 (UpdateRotationAnimation と同じ規約)
+			float engineSign = ((d == 1) ? 1.0f : -1.0f) * RotationSignOf(axis);
+			Vector3 moved = RotateAroundAxisLocal(center, axis, kEps * engineSign);
+			ImVec2 sm = project(moved);
+			ImVec2 dirScreen = { sm.x - sc.x, sm.y - sc.y };
+			float score = dragAccumX_ * dirScreen.x + dragAccumY_ * dirScreen.y;
+			if (score > best) { best = score; rotAxis = axis; dir = d; }
+		}
+	}
+	int layer = dragPickCell_[rotAxis];
+
+	// world層 → RubikCube の row_ に変換 (GetRowSign: X=+1, Y/Z=-1)
+	int row = (rotAxis == 0) ? (layer + 1) : (1 - layer);
+
+	// RubikCube の回転アニメを起動(論理更新もアニメ側で行われる)。
+	// 押しっぱなしで続けて回せるよう dragging_ は維持し、累積だけリセットする。
+	if (rubikCube_->RequestRotation(rotAxis, row, dir)) {
+		rotateFlash_ = 40.0f;
+	}
+	dragAccumX_ = 0.0f; dragAccumY_ = 0.0f;
+}
+
+//指しているブロックの面をハイライトし、回転フラッシュを描く
+void StageScene::DrawMouseGuide() {
+	using namespace TuboEngine::Math;
+	ImGuiIO& io = ImGui::GetIO();
+	float w = io.DisplaySize.x;
+	float h = io.DisplaySize.y;
+	ImDrawList* dl = ImGui::GetForegroundDrawList();
+
+	Matrix4x4 vp = camera_->GetViewProjectionMatrix();
+	auto project = [&](Vector3 wp) -> ImVec2 {
+		Vector3 c = TransformCoord(wp, vp);
+		return ImVec2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
+	};
+
+	// 診断表示(ピック状況・カメラ角)。原因切り分け用。
+	{
+		char dbg[192];
+		snprintf(dbg, sizeof(dbg),
+			"pick=%d cell(%d,%d,%d) nrm(%d,%d,%d) drag=%d yaw=%.2f pitch=%.2f",
+			pickValid_ ? 1 : 0, pickCell_[0], pickCell_[1], pickCell_[2],
+			pickNormal_[0], pickNormal_[1], pickNormal_[2], dragging_ ? 1 : 0, yaw_, pitch_);
+		dl->AddText(ImVec2(12.0f, 34.0f), IM_COL32(255, 240, 0, 255), dbg);
+	}
+
+	// ホバー中(またはドラッグ中)のブロックの面をハイライト
+	const int* cellSrc = dragging_ ? dragPickCell_ : pickCell_;
+	const int* nrmSrc = dragging_ ? dragPickNormal_ : pickNormal_;
+	if (dragging_ || pickValid_) {
+		int fa = (nrmSrc[0] != 0) ? 0 : (nrmSrc[1] != 0) ? 1 : 2;
+		int sign = nrmSrc[fa];
+		int inplane[2], k = 0;
+		for (int ax = 0; ax < 3; ax++) if (ax != fa) inplane[k++] = ax;
+
+		// 面の外側(±1.5)にセルの四隅を作りスクリーンへ投影
+		const int su[4] = { -1, 1, 1, -1 };
+		const int sv[4] = { -1, -1, 1, 1 };
+		ImVec2 pc[4];
+		for (int i = 0; i < 4; i++) {
+			float comp[3];
+			comp[fa] = sign * 1.5f;
+			comp[inplane[0]] = static_cast<float>(cellSrc[inplane[0]]) + 0.5f * su[i];
+			comp[inplane[1]] = static_cast<float>(cellSrc[inplane[1]]) + 0.5f * sv[i];
+			pc[i] = project(Vector3{ comp[0], comp[1], comp[2] });
+		}
+		ImU32 fill = dragging_ ? IM_COL32(120, 255, 120, 60) : IM_COL32(80, 180, 255, 55);
+		ImU32 edge = dragging_ ? IM_COL32(120, 255, 120, 230) : IM_COL32(140, 200, 255, 230);
+		dl->AddQuadFilled(pc[0], pc[1], pc[2], pc[3], fill);
+		dl->AddQuad(pc[0], pc[1], pc[2], pc[3], edge, 2.5f);
+	}
+
+	// 回転した瞬間のフラッシュ表示
+	if (rotateFlash_ > 0.0f) {
+		rotateFlash_ -= 1.0f;
+		const char* t = "ROTATE!";
+		float scale = 3.0f;
+		float fs = ImGui::GetFontSize() * scale;
+		ImVec2 ts = ImGui::CalcTextSize(t);
+		dl->AddText(ImGui::GetFont(), fs,
+			ImVec2(w * 0.5f - ts.x * scale * 0.5f, h * 0.10f),
+			IM_COL32(120, 255, 120, 255), t);
+	}
 }
 
 //クリア状態・操作状況を分かりやすく表示するHUD
@@ -433,14 +680,16 @@ void StageScene::DrawHud() {
 	ImGui::Text("Unmatched holes : %d", remain);
 	ImGui::Text("Cube moves      : %d", moveCount_);
 	ImGui::Separator();
+	ImGui::Text("[Camera] A/D:rotate  W/S:up-down  Q/E:zoom");
+	ImGui::Separator();
 	ImGui::Text("[Cube controls]");
 	ImGui::BulletText("R : change rotation axis (X/Y/Z)");
-	ImGui::BulletText("A / D : change row (0-2)");
-	ImGui::BulletText("Q / E : direction (0 / 1)");
+	ImGui::BulletText("LEFT / RIGHT : change row (0-2)");
+	ImGui::BulletText("UP / DOWN : direction (1 / 0)");
 	ImGui::BulletText("SPACE : rotate selected slice");
+	ImGui::BulletText("Mouse: point a block (highlighted) & drag to rotate");
 	ImGui::TextDisabled("(current axis/row: see 'Rubik Cube' window)");
 	ImGui::Separator();
-	ImGui::Text("[Camera] arrow keys : orbit");
 	ImGui::Checkbox("Editor Mode (block clear transition)", &editorEnabled_);
 	ImGui::End();
 

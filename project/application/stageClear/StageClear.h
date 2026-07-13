@@ -47,6 +47,16 @@ public:
     /// </summary>
     static void DrawDebug(const SixCube& current, const SixCube& required);
 
+    // --- キューブ幾何ヘルパー(マウスの3Dピッキング/スライス回転に使用) ---
+    /// 面i,行row,列col → 整数サーフェス座標(x,y,z) (RubikCubeの先端配置と一致)
+    static void CellToCoord(int face, int row, int col, int outCoord[3]);
+    /// 面i → 面法線(単位、成分は-1/0/1)
+    static void FaceNormal(int face, int outNormal[3]);
+    /// 単位法線 → 面インデックス(無ければ-1)
+    static int  NormalToFace(int nx, int ny, int nz);
+    /// サーフェス座標+法線 → (face,row,col)。見つかれば true。
+    static bool CoordToCell(const int coord[3], const int normal[3], int& face, int& row, int& col);
+
 private:
     struct Coord { int x, y, z; };
 

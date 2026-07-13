@@ -100,11 +100,12 @@ void RubikCube::Update() {
 			rotateDirectionNum_ = 0;
 		}
 	}
-	//回転方向の変更
-	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_E)) {
+
+	// 回す向き(カメラのQ/Eと競合しないよう上下矢印に変更)
+	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_UP)) {
 		rotation_ = 1;
 	}
-	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_Q)) {
+	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_DOWN)) {
    		rotation_ = 0;
 	}
 
@@ -116,19 +117,21 @@ void RubikCube::Update() {
 			object->Update();
 		}
 
+
 		for (auto& tip : tips_) {
 			tip->Update();
 		}
 		return;
 	}
-	//回転する列の変更
-	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_A)) {
+
+	// 回す列(カメラのA/Dと競合しないよう左右矢印に変更)
+	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RIGHT)) {
 		row_++;
 		if (row_ > 2) {
 			row_ = 0;
 		}
 	}
-	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_D)) {
+	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_LEFT)) {
 		row_--;
 		if (row_ < 0) {
 			row_ = 2;
@@ -141,9 +144,19 @@ void RubikCube::Update() {
 	for (int i = 0; i < 6; i++) {
 		for (int y = -1; y <= 1; y++) {
 			for (int x = -1; x <= 1; x++) {
-				if (sixCube_.oneCube[i].cube[1 + y][1 + x] >= 1) {
+				uint32_t shape = sixCube_.oneCube[i].cube[1 + y][1 + x];
+				if (shape >= 1) {
 					std::unique_ptr<TuboEngine::Object3d> object = std::make_unique<TuboEngine::Object3d>();
-					object->Initialize("tip/tip.obj");
+					// 形状ID(1=Cone / 2=Square)に応じて先端モデルを切り替える
+					if (shape == 1) {
+						object->Initialize("tip/tip.obj");
+					}
+					else if (shape == 2) {
+						object->Initialize("square/square.obj");
+					}
+					else {
+						object->Initialize("tip/tip.obj");
+					}
 					object->SetCamera(camera_);
 
 					if (i == 0) {

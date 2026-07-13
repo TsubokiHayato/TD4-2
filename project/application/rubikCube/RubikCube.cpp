@@ -223,15 +223,15 @@ void RubikCube::Debug() {
 	ImGui::End();
 
 }
-
+//回転アニメーション開始
 void RubikCube::StartRotationAnimation() {
 
 	rotatingObjects_.clear();
 	rotatingInitialPos_.clear();
 
-	//row_(0~2)をワールド座標(-1~1)に変換
+	//rowをワールド座標に変換
 	float targetCoord = (float(row_) - 1.0f) * GetRowSign(currentAxis_);
-
+	//回転対象のオブジェクトを収集
 	auto collectTarget = [&](TuboEngine::Object3d* object) {
 		TuboEngine::Math::Vector3 pos = object->GetPosition();
 
@@ -239,18 +239,18 @@ void RubikCube::StartRotationAnimation() {
 		if (currentAxis_ == RotationAxis::X) coord = pos.x;
 		else if (currentAxis_ == RotationAxis::Y) coord = pos.y;
 		else coord = pos.z;
-
+		//回転対象のオブジェクトを収集
 		if (std::abs(coord - targetCoord) < 0.5f) {
 			rotatingObjects_.push_back(object);
 			rotatingInitialPos_.push_back(pos);
 			rotatingInitialRot_.push_back(object->GetRotation());
 		}
 		};
-
+	//回転対象のオブジェクトを収集
 	for (auto& object : objects_) {
 		collectTarget(object.get());
 	}
-
+	//
 	for (auto& tip : tips_) {
 		collectTarget(tip.get());
 	}
@@ -258,7 +258,7 @@ void RubikCube::StartRotationAnimation() {
 	isRotating_ = true;
 	rotateAngle_ = 0.0f;
 }
-
+//回転アニメーション更新
 void RubikCube::UpdateRotationAnimation() {
 
 	float baseSign = (rotation_ == 1) ? 1.0f : -1.0f;
@@ -266,18 +266,18 @@ void RubikCube::UpdateRotationAnimation() {
 	rotateAngle_ += kRotateSpeedRad_;
 
 	float angle = sign * rotateAngle_;
-
+	//回転対象のオブジェクトを回転
 	for (size_t i = 0; i < rotatingObjects_.size(); i++) {
 		TuboEngine::Math::Vector3 newPos = RotateAroundAxis(rotatingInitialPos_[i], currentAxis_, angle);
 		rotatingObjects_[i]->SetPosition(newPos);
 
-		//回転も初期値から毎フレーム合成し直す(累積加算しない)
+		//回転も初期値から毎フレーム合成
 		Mat3 initialMat = EulerToMat3(rotatingInitialRot_[i]);
 		Mat3 axisMat = AxisRotationMat3(currentAxis_, angle);
-		Mat3 newMat = Mat3Mul(axisMat, initialMat);//ワールド軸回転なので前から掛ける
+		Mat3 newMat = Mat3Mul(axisMat, initialMat);
 		rotatingObjects_[i]->SetRotation(Mat3ToEuler(newMat));
 	}
-
+	//回転が90度になったら状態を更新してアニメーションを終了
 	if (rotateAngle_ >= float(M_PI) / 2.0f) {
 		rubikCubeState_->Rotation(sixCube_, row_, rotation_);
 
@@ -295,7 +295,7 @@ void RubikCube::UpdateRotationAnimation() {
 		rotatingInitialRot_.clear();
 	}
 }
-
+//回転軸を中心に回転させる
 TuboEngine::Math::Vector3 RubikCube::RotateAroundAxis(const TuboEngine::Math::Vector3& pos, RotationAxis axis, float angle) {
 	float c = cosf(angle);
 	float s = sinf(angle);
@@ -317,7 +317,7 @@ TuboEngine::Math::Vector3 RubikCube::RotateAroundAxis(const TuboEngine::Math::Ve
 	}
 	return result;
 }
-
+//回転軸と角度から3x3行列を作成
 RubikCube::Mat3 RubikCube::AxisRotationMat3(RotationAxis axis, float angle) {
 	float c = cosf(angle), s = sinf(angle);
 	Mat3 r = {};
@@ -334,7 +334,7 @@ RubikCube::Mat3 RubikCube::AxisRotationMat3(RotationAxis axis, float angle) {
 	}
 	return r;
 }
-
+//3x3行列の掛け算
 RubikCube::Mat3 RubikCube::Mat3Mul(const Mat3& a, const Mat3& b) {
 	Mat3 r = {};
 	for (int i = 0; i < 3; i++)
@@ -343,16 +343,14 @@ RubikCube::Mat3 RubikCube::Mat3Mul(const Mat3& a, const Mat3& b) {
 				r.m[i][j] += a.m[i][k] * b.m[k][j];
 	return r;
 }
-
-// 注意:Object3dが内部でどの順序(X*Y*Z等)でオイラー角を合成しているかに依存します。
-// ここではZ*Y*X(一般的な順序の一つ)を仮定しています。見た目がおかしい場合は順序を調整してください。
+//オイラー角から3x3行列に変換
 RubikCube::Mat3 RubikCube::EulerToMat3(const TuboEngine::Math::Vector3& euler) {
 	Mat3 rx = AxisRotationMat3(RotationAxis::X, euler.x);
 	Mat3 ry = AxisRotationMat3(RotationAxis::Y, euler.y);
 	Mat3 rz = AxisRotationMat3(RotationAxis::Z, euler.z);
 	return Mat3Mul(Mat3Mul(rz, ry), rx);
 }
-
+//3x3行列からオイラー角に変換
 TuboEngine::Math::Vector3 RubikCube::Mat3ToEuler(const Mat3& m) {
 	TuboEngine::Math::Vector3 e;
 	e.y = asinf(-m.m[2][0]);
@@ -366,7 +364,7 @@ TuboEngine::Math::Vector3 RubikCube::Mat3ToEuler(const Mat3& m) {
 	}
 	return e;
 }
-
+//回転軸の符号を取得
 float RubikCube::GetRowSign(RotationAxis axis) {
 	switch (axis) {
 	case RotationAxis::X: return 1.0f;
@@ -375,7 +373,7 @@ float RubikCube::GetRowSign(RotationAxis axis) {
 	}
 	return 1.0f;
 }
-
+//回転方向の符号を取得
 float RubikCube::GetRotationSign(RotationAxis axis) {
 	switch (axis) {
 	case RotationAxis::X: return 1.0f;

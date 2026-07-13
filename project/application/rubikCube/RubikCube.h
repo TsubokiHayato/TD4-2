@@ -11,7 +11,7 @@
 /// </summary>
 class RubikCube {
 
-	enum class RotationAxis {
+	enum class RotationAxis {//回転軸
 		X,
 		Y,
 		Z
@@ -36,25 +36,45 @@ public:
 	void Debug();
 
 private:
-
+	/// <summary>
+	// 3x3行列
+	/// </summary>
 	struct Mat3 { float m[3][3]; };
-
+	/// <summary>
+	/// 回転アニメーション開始
+	/// </summary>
 	void StartRotationAnimation();
-	
+	/// <summary>
+	/// 回転アニメーション更新
+	/// </summary>
 	void UpdateRotationAnimation();
-
+	/// <summary>
+	/// 回転軸を中心に回転させる
+	/// </summary>
 	TuboEngine::Math::Vector3 RotateAroundAxis(const TuboEngine::Math::Vector3& pos, RotationAxis axis, float angle);
-
+	/// <summary>
+	/// オイラー角から3x3行列に変換
+	/// </summary>
 	Mat3 EulerToMat3(const TuboEngine::Math::Vector3& euler);
-
+	/// <summary>
+	/// 3x3行列からオイラー角に変換
+	/// </summary>
 	TuboEngine::Math::Vector3 Mat3ToEuler(const Mat3& mat);
-
+	/// <summary>
+	/// 3x3行列の掛け算
+	/// </summary>
 	Mat3 Mat3Mul(const Mat3& a, const Mat3& b);
-
+	/// <summary>
+	/// 回転軸と角度から3x3行列を作成
+	/// </summary>
 	Mat3 AxisRotationMat3(RotationAxis axis, float angle);
-
+	/// <summary>
+	/// 回転軸の符号を取得
+	/// </summary>
 	float GetRowSign(RotationAxis axis);
-
+	/// <summary>
+	/// 回転方向の符号を取得
+	/// </summary>
 	float GetRotationSign(RotationAxis axis);
 
 private:

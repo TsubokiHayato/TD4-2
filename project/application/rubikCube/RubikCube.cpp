@@ -252,7 +252,7 @@ bool RubikCube::RequestRotation(int axis, int row, int dir) {
 		rubikCubeState_ = std::make_unique<RotationZState>();
 	}
 	row_ = row;
-	rotation_ = 1 - dir; // ドラッグ方向と回転が逆だったので向きを反転(0<->1)
+	rotation_ = dir; // 反転は呼び出し側(StageScene)で必要に応じて行う
 	StartRotationAnimation();
 	return true;
 }

@@ -95,6 +95,16 @@ private:
 	/// csvファイルを読み込む
 	/// </summary>
 	void LoadCSV(const std::string& fileName);
+
+	/// <summary>
+	/// csvファイルの削除
+	/// </summary>
+	void DeleteCSV(const std::string& fileName);
+
+	/// <summary>
+	/// 空のステージを作成
+	/// </summary>
+	void CreateNewStage();
 private:
 	// メインカメラ
 	std::unique_ptr<TuboEngine::Camera> camera_;

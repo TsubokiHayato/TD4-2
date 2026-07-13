@@ -54,13 +54,6 @@ private:
 	/// </summary>
 	void PlaceTip();
 
-	/// <summary>
-	/// 回転軸の表示 場所設定
-	/// </summary>
-	/// <param name="rowPoint">行の場所</param>
-	/// <param name="addRotationArrow">加算する</param>
-	void SelectAxisSetting(const TuboEngine::Math::Vector3& rowPoint, const TuboEngine::Math::Vector3& addRotationArrow);
-
 	/// -+- end -+-
 private:
 
@@ -86,7 +79,7 @@ private:
 	/// -- end --
 
 
-	// 回転方向
+	// 回転方向(1 or 0)
 	int rotateDirection_ = 0;
 
 	/// -- 選択回転軸 --
@@ -99,16 +92,12 @@ private:
 	/// -- 回転方向の矢印 --
 	std::unique_ptr<TuboEngine::Object3d> rotateArrowObject_;
 	TuboEngine::Math::Vector3 rotationArrow_{};//回転
-	float rotation_ = 0.0f;
 	/// -- end --
 
-
 	/// -- 回転角度 --
-	const float kRotationAngle_ = 5.0f * float(M_PI) / 180.0f;//五度回転
 	const float kNinetyRadian_ = 90.0f * float(M_PI) / 180.0f;//90度
 	const float kHundredEightyRadian_ = float(M_PI);//180度
 	/// -- end --
-
 
 	TuboEngine::Camera* camera_;
 

@@ -78,11 +78,9 @@ void RubikCube::Update() {
 	//回転方向の変更
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_E)) {
 		rotateDirection_ = 1;
-		rotationArrow_.y = kHundredEightyRadian_;
 	}
 	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_Q)) {
    		rotateDirection_ = 0;
-		rotationArrow_.y = 0.0f;
 	}
 
 	//回転軸の変更
@@ -103,16 +101,15 @@ void RubikCube::Update() {
 	//回転軸の変更
 	AxisChange();
 
-	if (rotateDirectionNum_ == 0) {
-		SelectAxisSetting({ (float)row_ - 1.0f,0.0f,0.0f }, { -kRotationAngle_ ,0.0f,0.0f });
-	}
-	else if (rotateDirectionNum_ == 1) {
-		SelectAxisSetting({ 0.0f,-((float)row_ - 1.0f),0.0f }, { kRotationAngle_ ,0.0f,0.0f });
-		rotationArrow_.z = kNinetyRadian_;
-	}
-	else if (rotateDirectionNum_ == 2) {
-		SelectAxisSetting({ 0,0,-((float)row_ - 1.0f) }, { 0.0f ,0.0f, kRotationAngle_ });
-	}
+	rubikCubeState_->Update(selectAxisPosition_, (float)row_, rotateDirection_, rotationArrow_);
+
+	//回転軸を表すマークの
+	selectAxisObject_->SetPosition(selectAxisPosition_);
+	selectAxisObject_->SetRotation(selectAxisRotate_);
+
+	//回転方向を表す矢印を回転する
+	rotateArrowObject_->SetPosition(selectAxisPosition_);
+	rotateArrowObject_->SetRotation(rotationArrow_);
 
 
 	//回転の開始
@@ -171,23 +168,24 @@ void RubikCube::Debug() {
 void RubikCube::AxisChange() {
 	//軸回転の変更　x y z
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_R)) {
-		rubikCubeState_.reset();//リセット
-
 		// 選択軸回転表示 / 矢印の位置リセット
 		selectAxisRotate_ = { 0,0,0 };
 		rotationArrow_ = { 0,0,0 };
 
 		// 順番 x軸(0) → y軸(1) → z軸(2) → x軸(0) ...
+		std::unique_ptr<BaseRubikCubeState> newState = rubikCubeState_->GetNextState();
+		rubikCubeState_.reset();//リセット
+
+		rubikCubeState_ = std::move(newState);
+
+		
 		if (rotateDirectionNum_ == 0) {
-			rubikCubeState_ = std::make_unique<RotationYState>();//Y軸回転モード
 			selectAxisRotate_.z = kNinetyRadian_;// 軸回転
 		}
 		else if (rotateDirectionNum_ == 1) {
-			rubikCubeState_ = std::make_unique<RotationZState>();//Z軸回転モード
 			selectAxisRotate_.y = kNinetyRadian_;// 軸回転
 		}
 		else if (rotateDirectionNum_ == 2) {
-			rubikCubeState_ = std::make_unique<RotationXState>();//X軸回転モード
 			selectAxisRotate_.x = kNinetyRadian_;// 軸回転
 		}
 
@@ -254,18 +252,3 @@ void RubikCube::PlaceTip() {
 		isRotationCube_ = false;
 	}
 }
-
-void RubikCube::SelectAxisSetting(const TuboEngine::Math::Vector3& rowPoint, const TuboEngine::Math::Vector3& addRotationArrow) {
-	selectAxisPosition_ = rowPoint;
-	rotationArrow_ += addRotationArrow;
-
-	//回転軸を表すマークの
-	selectAxisObject_->SetPosition(selectAxisPosition_);
-	selectAxisObject_->SetRotation(selectAxisRotate_);
-
-	//回転方向を表す矢印を回転する
-	rotateArrowObject_->SetPosition(selectAxisPosition_);
-	rotateArrowObject_->SetRotation(rotationArrow_);
-}
-
-

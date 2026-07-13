@@ -82,7 +82,7 @@ void RotationXState::Rotation(SixCube& sixCube, const uint32_t& row, int rotatio
 		
 	TuboEngine::Math::Vector3 prevCube = { (float)sixCube.oneCube[rotationRow_.num[0]].cube[0][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[1][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[2][row] };
 
-	if (rotation == 1) {		
+	if (rotation == 1) {
 		sixCube.oneCube[rotationRow_.num[0]].cube[0][row] = sixCube.oneCube[rotationRow_.num[1]].cube[0][row];
 		sixCube.oneCube[rotationRow_.num[0]].cube[1][row] = sixCube.oneCube[rotationRow_.num[1]].cube[1][row];
 		sixCube.oneCube[rotationRow_.num[0]].cube[2][row] = sixCube.oneCube[rotationRow_.num[1]].cube[2][row];

@@ -429,51 +429,63 @@ TuboEngine::Math::Vector3 RotateAroundAxisLocal(const TuboEngine::Math::Vector3&
 }
 } // namespace
 
-//マウス光線でキューブのブロック(面)を拾う。取れたら true。
+//カーソルに最も近い「前向きの面のセル」を選ぶ。
+//逆投影を使わず、各セルを前方投影(描画と同じVP)して最近傍を取るのでどのカメラ角度でも一致する。
 bool StageScene::PickBlock(float mx, float my, int cell[3], int normal[3]) {
 	using namespace TuboEngine::Math;
 	float w = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientWidth());
 	float h = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientHeight());
 
-	// スクリーン → ワールドの光線を作る
-	Matrix4x4 invVP = Inverse(camera_->GetViewProjectionMatrix());
-	float ndcx = (mx / w) * 2.0f - 1.0f;
-	float ndcy = 1.0f - (my / h) * 2.0f;
-	Vector3 farP = TransformCoord(Vector3{ ndcx, ndcy, 1.0f }, invVP);
-	Vector3 o = camera_->GetTranslate();          // 光線の起点はカメラの目の位置(頑健)
-	Vector3 d = Vector3::Normalize(farP - o);
+	Matrix4x4 vp = camera_->GetViewProjectionMatrix();
+	auto project = [&](Vector3 wp, ImVec2& out) -> bool {
+		Vector3 c = TransformCoord(wp, vp);
+		// カメラ背後(w<0でTransformCoordが破綻)を弾くため、ビュー空間zで前方判定
+		Vector3 vpos = TransformCoord(wp, camera_->GetViewMatrix());
+		if (vpos.z <= 0.0f) return false; // カメラの後ろ
+		out = ImVec2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
+		return true;
+	};
 
-	// キューブを [-1.5,1.5]^3 の箱として光線と交差(スラブ法)
-	const float half = 1.5f;
-	float tmin = -1e9f, tmax = 1e9f;
-	for (int a = 0; a < 3; a++) {
-		float oa = GetAxis(o, a), da = GetAxis(d, a);
-		if (std::abs(da) < 1e-6f) {
-			if (oa < -half || oa > half) return false;
-		}
-		else {
-			float t1 = (-half - oa) / da;
-			float t2 = (half - oa) / da;
-			if (t1 > t2) std::swap(t1, t2);
-			tmin = std::max(tmin, t1);
-			tmax = std::min(tmax, t2);
+	Vector3 eye = camera_->GetTranslate();
+	float best = 1e30f;
+	bool found = false;
+
+	// 6面 × 面内3x3 のサーフェスセルを走査
+	for (int fa = 0; fa < 3; fa++) {
+		for (int s = -1; s <= 1; s += 2) {
+			// 前向きの面だけ対象(カメラがその面の外側にある)
+			if (s * GetAxis(eye, fa) <= 1.0f) continue;
+
+			int inplane[2], k = 0;
+			for (int ax = 0; ax < 3; ax++) if (ax != fa) inplane[k++] = ax;
+
+			for (int u = -1; u <= 1; u++) {
+				for (int v = -1; v <= 1; v++) {
+					float comp[3];
+					comp[fa] = static_cast<float>(s);
+					comp[inplane[0]] = static_cast<float>(u);
+					comp[inplane[1]] = static_cast<float>(v);
+					ImVec2 sp;
+					if (!project(Vector3{ comp[0], comp[1], comp[2] }, sp)) continue;
+					float dx = sp.x - mx, dy = sp.y - my;
+					float dist = dx * dx + dy * dy;
+					if (dist < best) {
+						best = dist;
+						found = true;
+						cell[fa] = s;
+						cell[inplane[0]] = u;
+						cell[inplane[1]] = v;
+						normal[0] = normal[1] = normal[2] = 0;
+						normal[fa] = s;
+					}
+				}
+			}
 		}
 	}
-	if (tmin > tmax || tmax < 0.0f) return false;
-	float t = (tmin > 0.0f) ? tmin : tmax;
-	Vector3 hit = o + d * t;
 
-	// 当たった面 = |成分|最大の軸
-	int fa = 0; float bestv = std::abs(GetAxis(hit, 0));
-	for (int a = 1; a < 3; a++) { float v = std::abs(GetAxis(hit, a)); if (v > bestv) { bestv = v; fa = a; } }
-	int sign = (GetAxis(hit, fa) >= 0.0f) ? 1 : -1;
-
-	normal[0] = normal[1] = normal[2] = 0;
-	normal[fa] = sign;
-	for (int a = 0; a < 3; a++) {
-		if (a == fa) cell[a] = sign;
-		else cell[a] = std::clamp(static_cast<int>(std::lround(GetAxis(hit, a))), -1, 1);
-	}
+	// カーソルからの許容半径(px)。これ以上遠ければキューブ外とみなす。
+	const float kPickRadius = 90.0f;
+	if (!found || best > kPickRadius * kPickRadius) return false;
 	return true;
 }
 

@@ -78,66 +78,8 @@ void RubikCube::Update() {
 		return;
 	}
 
-	//向きを変更するのは全9方向
-
-	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_R)) {
-		rubikCubeState_.reset();
-
-		if (rotateDirectionNum_ == 0) {
-			rubikCubeState_ = std::make_unique<RotationYState>();
-			currentAxis_ = RotationAxis::Y;
-		}
-		else if (rotateDirectionNum_ == 1) {
-			rubikCubeState_ = std::make_unique<RotationZState>();
-			currentAxis_ = RotationAxis::Z;
-		}
-		else if (rotateDirectionNum_ == 2) {
-			rubikCubeState_ = std::make_unique<RotationXState>();
-			currentAxis_ = RotationAxis::X;
-		}
-		rotateDirectionNum_++;
-		if (rotateDirectionNum_ > 2) {
-			rotateDirectionNum_ = 0;
-		}
-	}
-
-	// 回す向き(カメラのQ/Eと競合しないよう上下矢印に変更)
-	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_UP)) {
-		rotation_ = 1;
-	}
-	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_DOWN)) {
-   		rotation_ = 0;
-	}
-
-	//回転開始
-	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_SPACE)) {
-		//rubikCubeState_->Rotation(sixCube_, row_,rotation_);
-		StartRotationAnimation();
-		for (auto& object : objects_) {
-			object->Update();
-		}
-
-
-		for (auto& tip : tips_) {
-			tip->Update();
-		}
-		return;
-	}
-
-	// 回す列(カメラのA/Dと競合しないよう左右矢印に変更)
-	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RIGHT)) {
-		row_++;
-		if (row_ > 2) {
-			row_ = 0;
-		}
-	}
-	else if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_LEFT)) {
-		row_--;
-		if (row_ < 0) {
-			row_ = 2;
-		}
-	}
-
+	// キーボードによる回転操作は廃止(操作はマウス側 StageScene::MouseCubeControl で行う)。
+	// 回転は外部から RequestRotation(axis,row,dir) で依頼される。
 
 	tips_.clear();
 	//マス目の設定

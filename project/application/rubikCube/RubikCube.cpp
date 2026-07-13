@@ -100,7 +100,7 @@ void RubikCube::Update() {
 			rotateDirectionNum_ = 0;
 		}
 	}
-
+	//回転方向の変更
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_E)) {
 		rotation_ = 1;
 	}
@@ -108,7 +108,7 @@ void RubikCube::Update() {
    		rotation_ = 0;
 	}
 
-
+	//回転開始
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_SPACE)) {
 		//rubikCubeState_->Rotation(sixCube_, row_,rotation_);
 		StartRotationAnimation();
@@ -121,7 +121,7 @@ void RubikCube::Update() {
 		}
 		return;
 	}
-
+	//回転する列の変更
 	if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_A)) {
 		row_++;
 		if (row_ > 2) {
@@ -177,9 +177,6 @@ void RubikCube::Update() {
 			}
 		}
 	}
-
-
-
 
 
 
@@ -250,7 +247,7 @@ void RubikCube::StartRotationAnimation() {
 	for (auto& object : objects_) {
 		collectTarget(object.get());
 	}
-	//
+	//回転対象のオブジェクトを収集
 	for (auto& tip : tips_) {
 		collectTarget(tip.get());
 	}
@@ -281,7 +278,7 @@ void RubikCube::UpdateRotationAnimation() {
 	if (rotateAngle_ >= float(M_PI) / 2.0f) {
 		rubikCubeState_->Rotation(sixCube_, row_, rotation_);
 
-		//位置・回転をスナップ(問題2の対策、後述)
+		//位置・回転をスナップ
 		for (auto* obj : rotatingObjects_) {
 			TuboEngine::Math::Vector3 p = obj->GetPosition();
 			p.x = std::round(p.x); p.y = std::round(p.y); p.z = std::round(p.z);

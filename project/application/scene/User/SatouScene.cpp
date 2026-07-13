@@ -42,6 +42,7 @@ void SatouScene::Update() {
 	camera_->Update();
 	debugCamera_->Update(camera_.get());
 
+	// Tキーで壁の透明化を切り替える
 	if (Input::GetInstance()->TriggerKey(DIK_T)) {
 		isTransparent_ = !isTransparent_;
 	}
@@ -55,6 +56,7 @@ void SatouScene::Update() {
 		cell.square->Update();
 		if (!cell.isActive) continue;
 
+		// オブジェクトの透明度（アルファ値）を設定
 		cell.wall->SetModelColor({ 1,1,1,wallAlpha_ });
 		cell.cone->SetModelColor({ 1,1,1,wallAlpha_ });
 		cell.square->SetModelColor({ 1,1,1,wallAlpha_ });
@@ -92,6 +94,7 @@ void SatouScene::ImGuiDraw() {
 	ImGui::Begin("Stage Map");
 	ImGui::PushItemWidth(100);
 
+	// ファイル名入力フィールド
 	ImGui::InputText(
 		"##FileName",
 		fileNameBuffer_,
@@ -103,6 +106,7 @@ void SatouScene::ImGuiDraw() {
 	const char* preview =
 		strlen(fileNameBuffer_) > 0 ? fileNameBuffer_ : "Select Stage";
 
+	// 既存ステージリストのドロップダウン
 	if (ImGui::BeginCombo("##StageList", preview))
 	{
 		for (int i = 0; i < csvFiles_.size(); i++)
@@ -124,14 +128,79 @@ void SatouScene::ImGuiDraw() {
 
 		ImGui::EndCombo();
 	}
-	if (ImGui::Button("Save")) {
-		SaveCSV(fileNameBuffer_);
-		RefreshCSVList();
-	}
-	/*if (ImGui::Button("Load"))
+	
+	// セーブボタン
+	if (ImGui::Button("Save"))
 	{
-		LoadCSV(fileNameBuffer_);
-	}*/
+		std::string path =
+			"Resources/4209_stages/" +
+			std::string(fileNameBuffer_) +
+			".csv";
+
+		// 既に存在する場合は上書き確認のポップアップを表示
+		if (fs::exists(path))
+		{
+			ImGui::OpenPopup("Overwrite?");
+		}
+		else
+		{
+			SaveCSV(fileNameBuffer_);
+			RefreshCSVList();
+		}
+	}
+	ImGui::SameLine();
+
+	// 削除ボタン
+	if (ImGui::Button("Delete"))
+	{
+		ImGui::OpenPopup("Delete Stage?");
+	}
+
+	// 削除確認ポップアップ
+	if (ImGui::BeginPopupModal("Delete Stage?", nullptr,
+		ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("%s.csv を削除しますか？", fileNameBuffer_);
+
+		if (ImGui::Button("Yes"))
+		{
+			DeleteCSV(fileNameBuffer_);
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("No"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+	
+	// 上書き確認ポップアップ
+	if (ImGui::BeginPopupModal("Overwrite?", nullptr,
+		ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("%s.csv は既に存在します。", fileNameBuffer_);
+		ImGui::Text("上書きしますか？");
+
+		if (ImGui::Button("Yes", ImVec2(120, 0)))
+		{
+			SaveCSV(fileNameBuffer_);
+			RefreshCSVList();
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("No", ImVec2(120, 0)))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
 
 	const float cellSize = 30.0f;
 
@@ -220,6 +289,8 @@ void SatouScene::ImGuiDraw() {
 		ImGui::Text("Scale: (%f, %f, %f)", wall.scale.x, wall.scale.y, wall.scale.z);
 	}
 	ImGui::End();
+	
+	// --- 透明化のデバッグメニュー ---
 	ImGui::Begin("Transparent Toggle");
 	ImGui::Checkbox("Transparent Walls", &isTransparent_);
 	ImGui::SliderFloat("Wall Alpha", &alpha_, 0.0f, 1.0f);
@@ -324,7 +395,7 @@ void SatouScene::CameraRotation()
 	// 回転速度
 	const float speed = 0.02f;
 
-	// キー入力によるカメラ回転
+	// キー入力によるカメラ回転 (A/Dキーで水平回転、W/Sキーで垂直回転)
 	if (Input::GetInstance()->PushKey(DIK_A)) {
 		yaw_ += speed;
 	}
@@ -368,6 +439,9 @@ void SatouScene::CameraRotation()
 	camera_->setRotation({ pitch_,yaw_ + 3.141592f,0.0f });
 }
 
+/// <summary>
+/// 現在のステージ構成をCSVファイルとして保存する
+/// </summary>
 void SatouScene::SaveCSV(const std::string& fileName)
 {
 	std::string path = "Resources/4209_stages/" + fileName + ".csv";
@@ -395,6 +469,9 @@ void SatouScene::SaveCSV(const std::string& fileName)
 	file.close();
 }
 
+/// <summary>
+/// ディレクトリ内のCSVファイルを検索してリストを更新する
+/// </summary>
 void SatouScene::RefreshCSVList()
 {
 	csvFiles_.clear();
@@ -410,6 +487,9 @@ void SatouScene::RefreshCSVList()
 	std::sort(csvFiles_.begin(), csvFiles_.end());
 }
 
+/// <summary>
+/// 指定された名前のCSVファイルからステージをロードする
+/// </summary>
 void SatouScene::LoadCSV(const std::string& fileName)
 {
 	StageLoader loader;
@@ -428,6 +508,43 @@ void SatouScene::LoadCSV(const std::string& fileName)
 			cellObjects_[idx].isActive = (csvData_[y][x] != 0);
 		}
 	}
+
+	RebuildWalls();
+}
+
+/// <summary>
+/// 指定された名前のCSVファイルを削除する
+/// </summary>
+void SatouScene::DeleteCSV(const std::string& fileName)
+{
+	if (fileName.empty()) {
+		return;
+	}
+
+	std::string path =
+		"Resources/4209_stages/" + fileName + ".csv";
+
+	if (fs::exists(path))
+	{
+		fs::remove(path);
+	}
+
+	RefreshCSVList();
+
+	fileNameBuffer_[0] = '\0';
+}
+
+/// <summary>
+/// 新規ステージデータを初期化する
+/// </summary>
+void SatouScene::CreateNewStage()
+{
+	csvData_.assign(18, std::vector<int>(24, 0));
+
+	strcpy_s(fileNameBuffer_, "new_stage");
+
+	cellObjects_.clear();
+	CreateWalls();
 
 	RebuildWalls();
 }

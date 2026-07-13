@@ -80,7 +80,6 @@ private:
 private:
 
 	SixCube sixCube_;
-
 	//最大マス
 	const uint32_t kMaxNum_ = 3;
 

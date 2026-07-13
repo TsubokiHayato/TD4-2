@@ -82,7 +82,7 @@ void RotationXState::Rotation(SixCube& sixCube, const uint32_t& row, int rotatio
 		
 	TuboEngine::Math::Vector3 prevCube = { (float)sixCube.oneCube[rotationRow_.num[0]].cube[0][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[1][row],(float)sixCube.oneCube[rotationRow_.num[0]].cube[2][row] };
 
-	if (rotation == 1) {		
+	if (rotation == 1) {
 		sixCube.oneCube[rotationRow_.num[0]].cube[0][row] = sixCube.oneCube[rotationRow_.num[1]].cube[0][row];
 		sixCube.oneCube[rotationRow_.num[0]].cube[1][row] = sixCube.oneCube[rotationRow_.num[1]].cube[1][row];
 		sixCube.oneCube[rotationRow_.num[0]].cube[2][row] = sixCube.oneCube[rotationRow_.num[1]].cube[2][row];
@@ -119,6 +119,24 @@ void RotationXState::Rotation(SixCube& sixCube, const uint32_t& row, int rotatio
 	}
 
 	RotationAround(sixCube, row, rotation, kLeftAround_, kRightAround_);
+}
+
+void RotationXState::Update(TuboEngine::Math::Vector3& selectAxisPosition,float row, int rotation, TuboEngine::Math::Vector3& rotationArrow) {
+	//回転する列の変更
+	selectAxisPosition.x = row - 1.0f;
+	//X軸回転
+	if (rotation == 0) {
+		rotationArrow.x -= kRotationAngle_;
+		rotationArrow.y = 0.0f;
+	}
+	else {
+		rotationArrow.x -= kRotationAngle_;
+		rotationArrow.y = kHundredEightyRadian_;//180度回転
+	}
+}
+
+std::unique_ptr<BaseRubikCubeState> RotationXState::GetNextState() {
+	return std::move(std::make_unique<RotationYState>());// x軸 から y軸 に
 }
 
 
@@ -181,6 +199,23 @@ void RotationYState::Rotation(SixCube& sixCube, const uint32_t& row, int rotatio
 	RotationAround(sixCube, row, rotation, kUpAround_, kDownAround_);
 }
 
+void RotationYState::Update(TuboEngine::Math::Vector3& selectAxisPosition, float row, int rotation, TuboEngine::Math::Vector3& rotationArrow) {
+	//回転する行の変更
+	selectAxisPosition.y = -(row - 1.0f);
+	//Y軸回転
+	if (rotation == 0) {
+		rotationArrow.x -= kRotationAngle_;
+		rotationArrow.z = -kNinetyRadian_;
+	}
+	else {
+		rotationArrow.x -= kRotationAngle_;
+		rotationArrow.z = kNinetyRadian_;
+	}
+}
+
+std::unique_ptr<BaseRubikCubeState> RotationYState::GetNextState() {
+	return std::move(std::make_unique<RotationZState>());// y軸 から z軸 に
+}
 
 void RotationZState::Rotation(SixCube& sixCube, const uint32_t& row, int rotation) {
 	rotationRow_.num[0] = 1 + matrixNum;//[row][]
@@ -241,4 +276,22 @@ void RotationZState::Rotation(SixCube& sixCube, const uint32_t& row, int rotatio
 
 
 	RotationAround(sixCube, row, rotation, kFarAround_, kNearAround_);
+}
+
+void RotationZState::Update(TuboEngine::Math::Vector3& selectAxisPosition, float row, int rotation, TuboEngine::Math::Vector3& rotationArrow) {
+	//回転する列の変更
+	selectAxisPosition.z = -(row - 1.0f);
+	//Z軸回転
+	if (rotation == 0) {
+		rotationArrow.z += kRotationAngle_;
+		rotationArrow.y = kNinetyRadian_;
+	}
+	else {
+		rotationArrow.z -= kRotationAngle_;
+		rotationArrow.y = -kNinetyRadian_;
+	}
+}
+
+std::unique_ptr<BaseRubikCubeState> RotationZState::GetNextState() {
+	return std::move(std::make_unique<RotationXState>());// z軸 から x軸 に
 }

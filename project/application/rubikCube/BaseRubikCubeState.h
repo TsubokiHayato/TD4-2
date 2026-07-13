@@ -110,4 +110,3 @@ private:
 	const uint32_t kNearAround_ = 3 + matrixNum;
 	const uint32_t kFarAround_ = 6 + matrixNum;
 };
-

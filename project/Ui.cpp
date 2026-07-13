@@ -41,6 +41,18 @@ void Ui::Initialize() {
 	controlsDetailSprite_ = std::make_unique<TuboEngine::Sprite>();
 	controlsDetailSprite_->Initialize("noise1.png");
 	controlsDetailSprite_->SetAnchorPoint({ 0.5f,0.5f });
+	//選択ガイドスプライト初期化
+	selectguideSprite_ = std::make_unique<TuboEngine::Sprite>();
+	selectguideSprite_->Initialize("selectguide.png");
+	selectguideSprite_->SetAnchorPoint({ 0.5f,0.5f });
+	selectguideSprite_->SetPosition(selectguidePos_);
+	selectguideSprite_->SetSize(selectguideBaseSize_);
+	//決定ガイドスプライト初期化
+	enterguideSprite_ = std::make_unique<TuboEngine::Sprite>();
+	enterguideSprite_->Initialize("enter.png");
+	enterguideSprite_->SetAnchorPoint({ 0.5f,0.5f });
+	enterguideSprite_->SetPosition(enterguidePos_);
+	enterguideSprite_->SetSize(enterguideBaseSize_);
 	
 }
 //更新
@@ -56,6 +68,8 @@ void Ui::Update() {
 	toSelectSprite_->Update();
 	controlsMenuSprite_->Update();
 	controlsDetailSprite_->Update();
+	selectguideSprite_->Update();
+	enterguideSprite_->Update();
 
 	//ポーズメニューの回転処理
 	if (isRotating_) {
@@ -94,6 +108,10 @@ void Ui::DrawStageScene() {
 			toTitleSprite_->Draw();
 			break;
 		}
+		//選択キーガイドの描画
+		selectguideSprite_->Draw();
+		//決定キーガイドの描画
+		enterguideSprite_->Draw();
 	}
 	//操作説明画面の描画
 	if (pauseMenutype_ == PauseMenuType::Options && !isShowPause_) {
@@ -130,14 +148,14 @@ void Ui::UpdatePauseMenu() {
 		}
 		if (!isRotating_) {
 		//ポーズメニューの選択
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_LEFT)) {
+		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_LEFT) || TuboEngine::Input::GetInstance()->TriggerKey(DIK_A)) {
 
 			rotateDir_ = -1;
 			rotateTimer_ = 0.0f;
 			isRotating_ = true;
 		}
 
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RIGHT)) {
+		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RIGHT) || TuboEngine::Input::GetInstance()->TriggerKey(DIK_D)) {
 
 			rotateDir_ = 1;
 			rotateTimer_ = 0.0f;
@@ -145,7 +163,7 @@ void Ui::UpdatePauseMenu() {
 		}
 	}
 		//ポーズメニューの決定
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_SPACE)) {
+		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RETURN)) {
 			switch (pauseSelectIndex_) {
 
 			case 0:
@@ -198,10 +216,13 @@ void Ui::UpdatePauseMenu() {
 	const float backScale = 0.6f;//後ろのスケール
 
 	pauseSprite_->SetPosition(pausePos_);//ポーズメニューの位置を設定
-	controlsDetailSprite_->SetPosition(controlsDetailPos_);
+	controlsDetailSprite_->SetPosition(controlsDetailPos_);//操作説明画面の位置を設定
+	selectguideSprite_->SetPosition(selectguidePos_);//選択キーガイドの位置を設定
+	enterguideSprite_->SetPosition(enterguidePos_);//決定キーガイドの位置を設定
 	pauseSprite_->SetSize({ baseW * eased, baseH * eased });//ポーズメニューのサイズを設定
-
-	controlsDetailSprite_->SetSize(controlsDetailBaseSize_);
+	controlsDetailSprite_->SetSize(controlsDetailBaseSize_);//操作説明画面のサイズを設定
+	selectguideSprite_->SetSize(selectguideBaseSize_);//選択キーガイドのサイズを設定
+	enterguideSprite_->SetSize(enterguideBaseSize_);//決定キーガイドのサイズを設定
 
 	TuboEngine::Sprite* sprite = nullptr;
 	Vector2 size;
@@ -321,6 +342,16 @@ void Ui::Debug() {
 
 		ImGui::DragFloat2("Controls Detail Pos", &controlsDetailPos_.x, 1.0f);
 		ImGui::DragFloat2("Controls Detail Size", &controlsDetailBaseSize_.x, 1.0f);
+
+		ImGui::SeparatorText("Select Guide");
+
+		ImGui::DragFloat2("Select Guide Pos", &selectguidePos_.x, 1.0f);
+		ImGui::DragFloat2("Select Guide Size", &selectguideBaseSize_.x, 1.0f);
+
+		ImGui::SeparatorText("Enter Guide");
+
+		ImGui::DragFloat2("Enter Guide Pos", &enterguidePos_.x, 1.0f);
+		ImGui::DragFloat2("Enter Guide Size", &enterguideBaseSize_.x, 1.0f);
 
 		ImGui::SeparatorText("Animation");
 

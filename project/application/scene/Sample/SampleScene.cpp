@@ -227,6 +227,9 @@ void SampleScene::DrawGuideImGui() {
 			if (ImGui::Button("Title へ")) {
 				sm->ChangeScene(TITLE);
 			}
+			if (ImGui::Button("Select へ")) {
+				sm->ChangeScene(SELECT);
+			}
 			ImGui::SameLine();
 			if (ImGui::Button("Stage へ")) {
 				sm->ChangeScene(STAGE);

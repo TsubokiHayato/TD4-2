@@ -528,10 +528,8 @@ void StageScene::MouseCubeControl() {
 	const float kThreshold = 45.0f;
 	if (std::abs(dragAccumX_) < kThreshold && std::abs(dragAccumY_) < kThreshold) return;
 
-	// 発行直前に、今カーソルが指しているブロックへ掴みを更新(ずれ対策・連続回転用)
-	if (pickValid_) {
-		for (int i = 0; i < 3; i++) { dragPickCell_[i] = pickCell_[i]; dragPickNormal_[i] = pickNormal_[i]; }
-	}
+	// 基準は「掴んだ瞬間のブロック」(dragPickCell_)に固定する。
+	// ここでカーソル位置に更新すると、ドラッグでずれた別ブロックが基準になってしまう。
 
 	// 掴んだ面の面内2軸(=回転軸の候補)を列挙
 	int fa = (dragPickNormal_[0] != 0) ? 0 : (dragPickNormal_[1] != 0) ? 1 : 2;
@@ -575,10 +573,12 @@ void StageScene::MouseCubeControl() {
 	int row = (rotAxis == 0) ? (layer + 1) : (1 - layer);
 
 	// RubikCube の回転アニメを起動(論理更新もアニメ側で行われる)。
-	// 押しっぱなしで続けて回せるよう dragging_ は維持し、累積だけリセットする。
+	// 1ドラッグ=1回転。基準ブロックが変わらないよう、回したら一旦掴みを解除する
+	// (次の回転はもう一度ブロックを掴み直す)。
 	if (rubikCube_->RequestRotation(rotAxis, row, dir)) {
 		rotateFlash_ = 40.0f;
 	}
+	dragging_ = false;
 	dragAccumX_ = 0.0f; dragAccumY_ = 0.0f;
 }
 

@@ -6,6 +6,7 @@
 #include "Input.h"   // キーボード / パッド入力
 #include "audio/AudioManager.h" // BGM / SE
 #include <Windows.h> // PostQuitMessage（終了）
+#include <cstdlib>   // rand
 
 using namespace TuboEngine;
 
@@ -22,12 +23,18 @@ constexpr const char* kMenuNames[] = {"menu_start", "menu_option", "menu_exit"};
 } // namespace
 
 void TitleScene::Initialize() {
-	// 最低限のカメラ
+	// キューブを斜め上から見る固定カメラ(立体感を出す)。
+	// StageScene と同じ球面座標の規約: pos=半径*(cosP sinY, sinP, cosP cosY), rot={P, Y+π, 0}
 	camera_ = std::make_unique<TuboEngine::Camera>();
-	camera_->SetTranslate({0.0f, 0.0f, -15.0f});
-	camera_->setRotation({0.0f, 0.0f, 0.0f});
-	camera_->setScale({1.0f, 1.0f, 1.0f});
+	camera_->SetTranslate({ 3.64f, 2.73f, 5.32f });
+	camera_->setRotation({ 0.4f, 0.6f + 3.141592f, 0.0f });
+	camera_->setScale({ 1.0f, 1.0f, 1.0f });
 	camera_->Update();
+
+	// タイトル演出: 自動で回り続けるルービックキューブ
+	rubikCube_ = std::make_unique<RubikCube>();
+	rubikCube_->Initialize(camera_.get());
+	autoRotateTimer_ = 0;
 
 	auto* tm = TextManager::GetInstance();
 
@@ -50,6 +57,24 @@ void TitleScene::Initialize() {
 
 void TitleScene::Update() {
 	camera_->Update();
+
+	// タイトル演出: キューブを自動で回し続ける。
+	// アニメが終わっていて、少し間が空いたら次のランダム回転を発行する。
+	if (rubikCube_) {
+		if (!rubikCube_->IsRotating()) {
+			if (autoRotateTimer_ > 0) {
+				autoRotateTimer_--;
+			}
+			else {
+				int axis = rand() % 3;
+				int row = rand() % 3;
+				int dir = rand() % 2;
+				rubikCube_->RequestRotation(axis, row, dir);
+				autoRotateTimer_ = 10; // 次の回転までの小休止(フレーム)
+			}
+		}
+		rubikCube_->Update();
+	}
 
 	// メニュー移動（上下）
 	if (int dir = TakeVerticalInput(); dir != 0) {
@@ -142,7 +167,9 @@ void TitleScene::Finalize() {
 	cursor_ = nullptr;
 }
 
-void TitleScene::Object3DDraw() {} // TODO: 3Dオブジェクト描画
+void TitleScene::Object3DDraw() {
+	if (rubikCube_) rubikCube_->Draw();
+} // 3Dオブジェクト描画(自動回転キューブ)
 void TitleScene::SpriteDraw() { TuboEngine::TextManager::GetInstance()->DrawAll(); } // 2Dスプライト描画
 void TitleScene::ImGuiDraw() { TuboEngine::TextManager::GetInstance()->DrawImGui(); } // ImGui描画
 void TitleScene::ParticleDraw() {}                                                    // TODO: パーティクル描画

@@ -1,6 +1,7 @@
 #pragma once
 #include "IScene.h"
 #include "Camera.h"
+#include "rubikCube/RubikCube.h"
 #include <array>
 #include <memory>
 
@@ -41,6 +42,10 @@ private:
 	bool TakeDecideInput() const;
 
 	std::unique_ptr<TuboEngine::Camera> camera_;
+
+	// 背景で自動回転し続けるルービックキューブ（タイトル演出）
+	std::unique_ptr<RubikCube> rubikCube_;
+	int autoRotateTimer_ = 0; // 次の自動回転までの残りフレーム
 
 	// Title.json からロードしたメニュー本体（TextManager 所有。ここは参照用の生ポインタ）
 	std::array<TuboEngine::TextObject*, kMenuCount> menuItems_{};

@@ -59,6 +59,8 @@ public:
 	//指定番号のステージ(壁+キューブCSV)を読み込む
 	void LoadStage(int index);
 
+	static void SetSelectedStageIndex(int index) { pendingStageIndex_ = index; }
+
 private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
 	std::unique_ptr<TuboEngine::Object3d>pauseMenuCube_;//ポーズメニューキューブ
@@ -116,6 +118,8 @@ private:
 	float targetRadius_ = 20.0f;                             // 注視点からの距離
 	float yaw_ = 0.0f;                                       // 左右
 	float pitch_ = 0.0f;                                     // 上下
+
+	static int pendingStageIndex_; //セレクトシーンで選ばれたステージ番号
 
 	const float PI = 3.1415926f;
 	const float DEG90 = PI / 2.0f;

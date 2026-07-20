@@ -19,6 +19,8 @@
 
 using namespace TuboEngine;
 
+int StageScene::pendingStageIndex_ = -1;
+
 void StageScene::Initialize() {
 	// オービットカメラ(SatouScene移植: A/D回転 W/S上下 Q/Eズーム)
 	camera_ = std::make_unique<TuboEngine::Camera>();
@@ -37,6 +39,9 @@ void StageScene::Initialize() {
 	ui_->Initialize();
 
 	// --- ステージ構築(StageLoader → CubeMapConverter → StageBuilder) ---
+	stageIndex_ = std::clamp(pendingStageIndex_, 1, kStageCount);
+	stagePath_ = "Resources/4209_stages/stage" + std::to_string(stageIndex_) + ".csv";
+	cubeStagePath_ = "Resources/4209_stages/cube" + std::to_string(stageIndex_) + ".csv";
 	StageLoader stageLoader;
 	csvData_ = stageLoader.Load(stagePath_);
 	cubeCsvData_ = stageLoader.Load(cubeStagePath_);
@@ -71,7 +76,7 @@ void StageScene::Update() {
 	// パズル本体(キューブ操作＋クリア判定)
 	rubikCube_->Update();
 
-	// キューブ状態の変化を検知して操作カウンタを進める(操作が効いたか可視化)
+	//キューブ状態の変化を検知して操作カウンタを進める
 	{
 		const SixCube& now = rubikCube_->GetState();
 		if (prevCubeStateValid_) {
@@ -94,7 +99,7 @@ void StageScene::Update() {
 
 	//ポーズメニューキューブ
 	pauseMenuCube_->Update();
-
+	
 	//Uiの更新
 	ui_->Update();
 
@@ -112,14 +117,14 @@ void StageScene::Update() {
 	//TextManagerの更新
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 
-	// 別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(CLEAR);   // 次フレームで切り替わる
+	//別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(CLEAR);   // 次フレームで切り替わる
 }
 
 void StageScene::Finalize() {}
 
 void StageScene::Object3DDraw() {
 
-	// 壁(穴つき)とキューブ本体+先端の描画
+	// 壁とキューブ本体+先端の描画
 	for (auto& wall : wallObjects_) {
 		wall->Draw();
 	}
@@ -230,7 +235,7 @@ void StageScene::ChangeSceneFromPause() {
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
 		break;
 	case Ui::PauseMenuType::ToSelect:
-
+		SceneManager::GetInstance()->ChangeScene(SELECT);
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
 		break;
 	default:

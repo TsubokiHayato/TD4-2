@@ -134,6 +134,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="application\scene\User\TuboScene.cpp" />
     <ClCompile Include="application\RubikCube\RubikCube.cpp" />
     <ClCompile Include="application\stageClear\StageClear.cpp" />
+    <ClCompile Include="application\scene\Tutorial\TutorialScene.cpp" />
     <ClCompile Include="Ui.cpp" />
     <ClCompile Include="application\scene\Option\OptionScene.cpp" />
     <ClCompile Include="application\settings\Settings.cpp" />
@@ -161,6 +162,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="application\RubikCube\BaseRubikCubeState.h" />
     <ClInclude Include="application\RubikCube\RubikCube.h" />
     <ClInclude Include="application\stageClear\StageClear.h" />
+    <ClInclude Include="application\scene\Tutorial\TutorialScene.h" />
     <ClInclude Include="Ui.h" />
     <ClInclude Include="application\scene\Option\OptionScene.h" />
     <ClInclude Include="application\settings\Settings.h" />

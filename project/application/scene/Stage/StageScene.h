@@ -63,6 +63,7 @@ private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
 	std::unique_ptr<TuboEngine::Object3d>pauseMenuCube_;//ポーズメニューキューブ
 	std::unique_ptr<Ui>ui_;//UIクラス
+	std::unique_ptr<TuboEngine::Object3d> background;
 
 	// --- パズル本体 ---
 	std::unique_ptr<RubikCube> rubikCube_;                            // 先端つきキューブ(他者作成、getterのみ利用)

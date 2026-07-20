@@ -43,6 +43,9 @@ private:
 
 	std::unique_ptr<TuboEngine::Camera> camera_;
 
+	
+	std::unique_ptr<TuboEngine::Object3d> background;//背景オブジェクト
+
 	// 背景で自動回転し続けるルービックキューブ（タイトル演出）
 	std::unique_ptr<RubikCube> rubikCube_;
 	int autoRotateTimer_ = 0; // 次の自動回転までの残りフレーム

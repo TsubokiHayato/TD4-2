@@ -31,6 +31,9 @@ void TitleScene::Initialize() {
 	camera_->setScale({ 1.0f, 1.0f, 1.0f });
 	camera_->Update();
 
+	background = std::make_unique<TuboEngine::Object3d>();
+	background->Initialize("skyBox/skyBox.obj");
+
 	// タイトル演出: 自動で回り続けるルービックキューブ
 	rubikCube_ = std::make_unique<RubikCube>();
 	rubikCube_->Initialize(camera_.get());
@@ -88,6 +91,9 @@ void TitleScene::Update() {
 		AudioManager::GetInstance()->PlaySe("decide.mp3"); // 決定音
 		DecideSelection();
 	}
+
+	background->SetCamera(camera_.get());
+	background->Update();
 
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 }
@@ -168,6 +174,7 @@ void TitleScene::Finalize() {
 }
 
 void TitleScene::Object3DDraw() {
+	background->Draw();
 	if (rubikCube_) rubikCube_->Draw();
 } // 3Dオブジェクト描画(自動回転キューブ)
 void TitleScene::SpriteDraw() { TuboEngine::TextManager::GetInstance()->DrawAll(); } // 2Dスプライト描画

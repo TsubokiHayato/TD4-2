@@ -5,8 +5,11 @@
 #include "TextObject.h"
 #include "Input.h"   // キーボード / パッド入力
 #include "audio/AudioManager.h" // BGM / SE
+#include "ParticleManager.h"    // タイトル背景のパーティクル
+#include "IParticleEmitter.h"   // ParticlePreset 構造体
 #include <Windows.h> // PostQuitMessage（終了）
 #include <cstdlib>   // rand
+#include <cmath>     // sin
 
 using namespace TuboEngine;
 
@@ -20,6 +23,23 @@ constexpr float kCursorOffsetX = 175.0f;
 
 // Title.json 内のメニュー項目 name（enum MenuItem の並びと対応）
 constexpr const char* kMenuNames[] = {"menu_start", "menu_option", "menu_exit"};
+
+// --- 登場アニメのタイミング（秒）---
+constexpr float kTitleStart  = 0.0f;  // タイトル文字が出始める時刻
+constexpr float kTitleDur    = 0.5f;  // タイトルのフェード時間
+constexpr float kMenuStartT  = 0.35f; // 最初のメニュー項目が出始める時刻
+constexpr float kMenuStagger = 0.12f; // 項目ごとの遅延（順番に出す）
+constexpr float kMenuDur     = 0.4f;  // 各メニュー項目のフェード時間
+constexpr float kCursorStart = 0.9f;  // カーソル／ヒントが出始める時刻
+
+// 0〜1 にクランプ
+float Clamp01(float t) { return t < 0.0f ? 0.0f : (t > 1.0f ? 1.0f : t); }
+// イーズアウト（最後にゆっくり止まる）
+float EaseOutCubic(float t) {
+	t = Clamp01(t);
+	float u = 1.0f - t;
+	return 1.0f - u * u * u;
+}
 } // namespace
 
 void TitleScene::Initialize() {
@@ -48,17 +68,58 @@ void TitleScene::Initialize() {
 	// 選択で色替え／移動する要素だけ、name で引いて生ポインタを保持しておく。
 	for (int i = 0; i < kMenuCount; ++i) {
 		menuItems_[i] = tm->GetTextByName(kMenuNames[i]);
+		// JSON 由来の位置を「最終位置」として覚える（登場アニメはここへ寄せる）。
+		if (menuItems_[i])
+			menuHome_[i] = menuItems_[i]->GetPosition();
 	}
 	cursor_ = tm->GetTextByName("cursor");
+	title_ = tm->GetTextByName("title");
+	hint_ = tm->GetTextByName("hint");
+	if (title_)
+		titleHome_ = title_->GetPosition();
 
 	selected_ = kMenuStart;
-	ApplySelection();
+
+	// 登場アニメを最初から再生する。
+	introTimer_ = 0.0f;
+	animTime_ = 0.0f;
+	cursorInit_ = false;
+	UpdateMenuVisual(0.0f); // 1フレーム目から「まだ出ていない」状態にしておく
+
+	// タイトル背景に、ゆっくり上へ舞う四角い粒を出す。
+	// Default エミッターの板ポリは正方形なので、不透明な正方形テクスチャ(yellow.png)を
+	// 貼ると「四角いパーティクル」になる。色・透明度は color で制御する。
+	ParticlePreset preset;
+	preset.name = "TitleSquare";
+	preset.texture = "yellow.png"; // "Resources/Textures/" から。不透明な黄色い正方形
+	preset.maxInstances = 256;
+	preset.billboard = true; // 常にカメラを向く
+	preset.autoEmit = true;  // 出し続ける
+	preset.emitRate = 18.0f; // 1秒あたりの放出数（控えめ）
+	preset.center = {0.0f, -3.5f, 0.0f};
+	preset.posMin = {-6.0f, 0.0f, -2.0f};
+	preset.posMax = {6.0f, 0.0f, 2.0f};
+	preset.velMin = {-0.1f, 0.4f, -0.1f};
+	preset.velMax = {0.1f, 1.0f, 0.1f};
+	preset.lifeMin = 2.5f;
+	preset.lifeMax = 4.5f;
+	preset.gravity = {0.0f, 0.0f, 0.0f};
+	preset.scaleStart = {0.12f, 0.12f, 0.12f};
+	preset.scaleEnd = {0.04f, 0.04f, 0.04f}; // 四角形を保ったまま少し小さくして消える
+	preset.colorStart = {1.0f, 1.0f, 1.0f, 0.9f}; // テクスチャの黄色をそのまま活かす
+	preset.colorEnd = {1.0f, 1.0f, 1.0f, 0.0f};   // だんだん透明に
+	if (IParticleEmitter* e = ParticleManager::GetInstance()->CreateEmitterByType("Default", preset))
+		particleName_ = e->GetName();
 
 	// タイトル BGM をループ再生（既に鳴っていれば音量だけ合わせる）。
 	AudioManager::GetInstance()->PlayBgm("title.wav");
 }
 
 void TitleScene::Update() {
+	const float dt = 1.0f / 60.0f;
+	animTime_ += dt;
+	introTimer_ += dt;
+
 	camera_->Update();
 
 	// タイトル演出: キューブを自動で回し続ける。
@@ -82,7 +143,6 @@ void TitleScene::Update() {
 	// メニュー移動（上下）
 	if (int dir = TakeVerticalInput(); dir != 0) {
 		selected_ = (selected_ + dir + kMenuCount) % kMenuCount; // 端でループ
-		ApplySelection();
 		AudioManager::GetInstance()->PlaySe("cursor_move.mp3"); // カーソル移動音
 	}
 
@@ -92,22 +152,75 @@ void TitleScene::Update() {
 		DecideSelection();
 	}
 
+	// メニューの見た目（登場アニメ・選択色・カーソル移動・明滅）を更新する。
+	UpdateMenuVisual(dt);
+
 	background->SetCamera(camera_.get());
 	background->Update();
+
+	// パーティクルはエンジンが自動更新しないので、シーンが駆動する。
+	ParticleManager::GetInstance()->Update(dt, camera_.get());
 
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 }
 
-void TitleScene::ApplySelection() {
-	for (int i = 0; i < kMenuCount; ++i) {
-		if (menuItems_[i]) {
-			menuItems_[i]->SetColor(i == selected_ ? kColorSelected : kColorNormal);
-		}
+// メニューの見た目を毎フレーム作り直す。
+//  ・登場アニメ: introTimer_ に応じてタイトル→メニュー→カーソルの順にフェードイン＋寄せ
+//  ・選択表現 : 選択項目は色を変え、わずかに拡大パルスさせる
+//  ・カーソル : 目標位置へイージングで滑らかに移動し、ゆっくり明滅する
+void TitleScene::UpdateMenuVisual(float dt) {
+	(void)dt;
+
+	// --- タイトル文字（上から少し降りてフェードイン）---
+	if (title_) {
+		float e = EaseOutCubic((introTimer_ - kTitleStart) / kTitleDur);
+		title_->SetColor({1.0f, 1.0f, 1.0f, e});
+		title_->SetPosition({titleHome_.x, titleHome_.y - (1.0f - e) * 40.0f});
 	}
-	// カーソルは選択中の項目の左隣へ移動する（項目位置は JSON 由来）。
-	if (cursor_ && menuItems_[selected_]) {
-		const Math::Vector2 itemPos = menuItems_[selected_]->GetPosition();
-		cursor_->SetPosition({itemPos.x - kCursorOffsetX, itemPos.y});
+
+	// --- メニュー項目（順番に下から寄ってフェードイン）---
+	for (int i = 0; i < kMenuCount; ++i) {
+		if (!menuItems_[i])
+			continue;
+		float start = kMenuStartT + kMenuStagger * static_cast<float>(i);
+		float e = EaseOutCubic((introTimer_ - start) / kMenuDur);
+
+		// 選択中は黄色、その他は白。アルファは登場アニメの進み具合。
+		const Math::Vector4& base = (i == selected_) ? kColorSelected : kColorNormal;
+		menuItems_[i]->SetColor({base.x, base.y, base.z, e * base.w});
+
+		// 下から寄せる。
+		menuItems_[i]->SetPosition({menuHome_[i].x, menuHome_[i].y + (1.0f - e) * 30.0f});
+
+		// 選択項目だけ軽く拡大パルス（今どこを選んでいるか分かりやすく）。
+		float scale = 1.0f;
+		if (i == selected_)
+			scale = 1.0f + 0.08f * std::sin(animTime_ * 6.0f);
+		menuItems_[i]->SetScale(scale);
+	}
+
+	// --- カーソル（目標へイージング移動＋明滅、遅れてフェードイン）---
+	if (cursor_) {
+		Math::Vector2 target = {menuHome_[selected_].x - kCursorOffsetX, menuHome_[selected_].y};
+		if (!cursorInit_) {
+			cursorPos_ = target; // 初回はワープ（最初だけ滑らせない）
+			cursorInit_ = true;
+		}
+		// 指数的に目標へ寄せる（フレーム毎に距離の25%を詰める）。
+		cursorPos_.x += (target.x - cursorPos_.x) * 0.25f;
+		cursorPos_.y += (target.y - cursorPos_.y) * 0.25f;
+		cursor_->SetPosition(cursorPos_);
+
+		float e = EaseOutCubic((introTimer_ - kCursorStart) / kMenuDur);
+		float blink = 0.6f + 0.4f * std::sin(animTime_ * 5.0f); // ゆっくり明滅
+		cursor_->SetColor({kColorSelected.x, kColorSelected.y, kColorSelected.z, e * blink});
+	}
+
+	// --- 操作ヒント（カーソルと同じタイミングでフェードイン）---
+	if (hint_) {
+		float e = EaseOutCubic((introTimer_ - kCursorStart) / kMenuDur);
+		const Math::Vector4& c = hint_->GetColor();
+		hint_->SetColor({c.x, c.y, c.z, e}); // JSON の灰色を保ちつつアルファだけ動かす
 	}
 }
 
@@ -171,6 +284,14 @@ void TitleScene::Finalize() {
 	TuboEngine::TextManager::GetInstance()->ClearAllSprites();
 	menuItems_.fill(nullptr);
 	cursor_ = nullptr;
+	title_ = nullptr;
+	hint_ = nullptr;
+
+	// タイトル専用のパーティクルを片付ける（次シーンへ残さない）。
+	if (!particleName_.empty()) {
+		ParticleManager::GetInstance()->Remove(particleName_);
+		particleName_.clear();
+	}
 }
 
 void TitleScene::Object3DDraw() {
@@ -179,4 +300,4 @@ void TitleScene::Object3DDraw() {
 } // 3Dオブジェクト描画(自動回転キューブ)
 void TitleScene::SpriteDraw() { TuboEngine::TextManager::GetInstance()->DrawAll(); } // 2Dスプライト描画
 void TitleScene::ImGuiDraw() { TuboEngine::TextManager::GetInstance()->DrawImGui(); } // ImGui描画
-void TitleScene::ParticleDraw() {}                                                    // TODO: パーティクル描画
+void TitleScene::ParticleDraw() { ParticleManager::GetInstance()->Draw(); }           // 背景パーティクル描画

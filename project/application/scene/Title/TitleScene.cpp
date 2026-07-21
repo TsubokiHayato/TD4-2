@@ -111,8 +111,12 @@ void TitleScene::Initialize() {
 	if (IParticleEmitter* e = ParticleManager::GetInstance()->CreateEmitterByType("Default", preset))
 		particleName_ = e->GetName();
 
-	// タイトル BGM をループ再生（既に鳴っていれば音量だけ合わせる）。
-	AudioManager::GetInstance()->PlayBgm("title.wav");
+	// タイトルを開いた合図の SE（メニューがスッと出てくる感じの音）。
+	AudioManager::GetInstance()->PlaySe("window_open.mp3");
+
+	// タイトル BGM を無音から 1.2 秒かけてフェードインしつつループ再生。
+	// （別シーンから戻ってきて同じ曲が鳴っているときは、フェードせず継続する）
+	AudioManager::GetInstance()->PlayBgmFadeIn("title.wav", 1.2f);
 }
 
 void TitleScene::Update() {
@@ -121,6 +125,9 @@ void TitleScene::Update() {
 	introTimer_ += dt;
 
 	camera_->Update();
+
+	// BGM フェードインを進める。
+	AudioManager::GetInstance()->UpdateFade(dt);
 
 	// タイトル演出: キューブを自動で回し続ける。
 	// アニメが終わっていて、少し間が空いたら次のランダム回転を発行する。

@@ -23,6 +23,7 @@
     <ClCompile Include="CubeMapConverter.cpp" />
     <ClCompile Include="StageLoader.cpp" />
     <ClCompile Include="StageBuilder.cpp" />
+    <ClCompile Include="application\scene\Select\StageSelectScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
@@ -53,6 +54,7 @@
     <ClInclude Include="StageLoader.h" />
     <ClInclude Include="application\WallData.h" />
     <ClInclude Include="StageBuilder.h" />
+    <ClInclude Include="application\scene\Select\StageSelectScene.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="application">

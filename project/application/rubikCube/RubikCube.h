@@ -54,6 +54,8 @@ public:
 	/// <param name="dir">回す向き 0 or 1</param>
 	bool RequestRotation(int axis, int row, int dir);
 
+	void GuideRotationAxis(int axis[], int row[]);
+
 	/// <summary>
 	/// 回転アニメーション中か(入力ガード用)。
 	/// </summary>
@@ -67,6 +69,11 @@ public:
 	void SetWholeSpinYaw(float angleRad) { wholeSpinYaw_ = angleRad; }
 
 private:
+
+	/// ------
+	///  関数
+	/// ------
+
 	/// <summary>
 	// 3x3行列
 	/// </summary>
@@ -110,6 +117,11 @@ private:
 
 private:
 
+	/// ------
+	///  変数
+	/// ------
+
+	/// -- ルービックキューブ --
 	SixCube sixCube_;
 	//最大マス
 	const uint32_t kMaxNum_ = 3;
@@ -121,8 +133,16 @@ private:
 	uint32_t rotateDirectionNum_ = 0;//回転する向き0～2
 
 	std::vector<std::unique_ptr<TuboEngine::Object3d>> objects_;//キューブ本体
-
+	
 	std::vector<std::unique_ptr<TuboEngine::Object3d>> tips_;//先端たち
+	
+	const float kSize_ = 0.5f;
+
+	/// -- 選択回転軸 --
+	std::unique_ptr<TuboEngine::Object3d> selectAxisObject_[2];
+	TuboEngine::Math::Vector3 selectAxisPosition_[2];//座標位置
+	TuboEngine::Math::Vector3 selectAxisRotate_[2];//回転
+	/// -- end --
 
 	RotationAxis currentAxis_ = RotationAxis::X;//回転軸
 
@@ -141,6 +161,17 @@ private:
 
 	// 描画時だけ適用する、キューブ全体の Y 軸回転角(ラジアン)。0 なら通常描画。
 	float wholeSpinYaw_ = 0.0f;
+	/// -- 回転方向の矢印 --
+	std::unique_ptr<TuboEngine::Object3d> rotateArrowObject_;
+	TuboEngine::Math::Vector3 positionArrow_{};//座標位置
+	TuboEngine::Math::Vector3 rotationArrow_{};//回転
+	/// -- end --
+
+	/// -- 回転角度 --
+	const float kNinetyRadian_ = 90.0f * float(M_PI) / 180.0f;//90度
+	const float kHundredEightyRadian_ = float(M_PI);//180度
+	/// -- end --
+
 
 	TuboEngine::Camera* camera_;
 };

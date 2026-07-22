@@ -15,11 +15,12 @@ void RubikCube::Initialize(TuboEngine::Camera* camera) {
 	for (int x = -1; x <= 1; x++) {
 		for (int y = -1; y <= 1; y++) {
 			for (int z = -1; z <= 1; z++) {
+				if (x == 0 && y == 0 && z == 0) continue;//真ん中は見えないからいらない
 				std::unique_ptr<TuboEngine::Object3d> object = std::make_unique<TuboEngine::Object3d>();
 				object->Initialize("OneCube/OneCube.obj");
 				object->SetCamera(camera);
 				object->SetPosition({ float(x),float(y),float(z) });
-				object->SetScale({ 0.3f,0.3f,0.3f });
+				object->SetScale({ kSize_,kSize_,kSize_ });
 				objects_.push_back(std::move(object));
 			}
 		}
@@ -38,21 +39,6 @@ void RubikCube::Initialize(TuboEngine::Camera* camera) {
 		sixCube_.oneCube[i].cube[2][2] = 0;
 	}
 
-
-	sixCube_.oneCube[0].cube[0][1] = 1;
-	sixCube_.oneCube[0].cube[1][1] = 1;
-	sixCube_.oneCube[0].cube[2][1] = 1;
-
-
-	sixCube_.oneCube[2].cube[0][1] = 1;
-	sixCube_.oneCube[2].cube[1][1] = 1;
-	sixCube_.oneCube[2].cube[2][1] = 0;
-
-	sixCube_.oneCube[5].cube[0][1] = 1;
-	sixCube_.oneCube[5].cube[1][1] = 1;
-	sixCube_.oneCube[5].cube[2][1] = 0;
-
-
 	///イメージ
 	///     上
 	/// 
@@ -66,6 +52,28 @@ void RubikCube::Initialize(TuboEngine::Camera* camera) {
 	/// y 2 3 4 6
 	/// z 1 2 5 4
 	/// 6は逆行列にするかも
+
+	//選択した回転列
+
+	selectAxisObject_[0] = std::make_unique<TuboEngine::Object3d>();
+	selectAxisObject_[0]->Initialize("SelectAxis/SelectAxis.obj");
+	selectAxisObject_[0]->SetCamera(camera);
+	selectAxisObject_[0]->SetPosition({0,0,0});
+	selectAxisObject_[0]->SetScale({kSize_,kSize_,kSize_});
+
+	selectAxisObject_[1] = std::make_unique<TuboEngine::Object3d>();
+	selectAxisObject_[1]->Initialize("SelectAxis/SelectAxis.obj");
+	selectAxisObject_[1]->SetCamera(camera);
+	selectAxisObject_[1]->SetPosition({ 0,0,0 });
+	selectAxisObject_[1]->SetScale({ kSize_,kSize_,kSize_ });
+
+	//回転方向の矢印
+	rotateArrowObject_ = std::make_unique<TuboEngine::Object3d>();
+	rotateArrowObject_->Initialize("RotateArrow/RotateArrow.obj");
+	rotateArrowObject_->SetCamera(camera);
+	rotateArrowObject_->SetPosition({ 0,0,0 });
+	rotateArrowObject_->SetScale({ kSize_,kSize_,kSize_ });
+
 }
 
 void RubikCube::Update() {
@@ -75,6 +83,19 @@ void RubikCube::Update() {
 
 		for (auto& object : objects_)object->Update();
 		for (auto& tip : tips_)tip->Update();
+
+		selectAxisObject_[0]->SetPosition(selectAxisPosition_[0]);
+		selectAxisObject_[0]->SetRotation(selectAxisRotate_[0]);
+		selectAxisObject_[0]->Update();
+
+		selectAxisObject_[1]->SetPosition(selectAxisPosition_[1]);
+		selectAxisObject_[1]->SetRotation(selectAxisRotate_[1]);
+		selectAxisObject_[1]->Update();
+
+		rubikCubeState_->RotationDirection(rotation_, rotationArrow_);
+
+		rotateArrowObject_->SetRotation(rotationArrow_);
+		rotateArrowObject_->Update();
 		return;
 	}
 
@@ -142,6 +163,18 @@ void RubikCube::Update() {
 	for (auto& tip : tips_) {
 		tip->Update();
 	}
+	selectAxisObject_[0]->SetPosition(selectAxisPosition_[0]);
+	selectAxisObject_[0]->SetRotation(selectAxisRotate_[0]);
+	selectAxisObject_[0]->Update();
+
+	selectAxisObject_[1]->SetPosition(selectAxisPosition_[1]);
+	selectAxisObject_[1]->SetRotation(selectAxisRotate_[1]);
+	selectAxisObject_[1]->Update();
+
+	rubikCubeState_->RotationDirection(rotation_, rotationArrow_);
+
+	rotateArrowObject_->SetRotation(rotationArrow_);
+	rotateArrowObject_->Update();
 }
 
 void RubikCube::Draw() {
@@ -179,6 +212,10 @@ void RubikCube::Draw() {
 	for (auto& tip : tips_) {
 		drawSpun(tip.get());
 	}
+	selectAxisObject_[0]->Draw();
+	selectAxisObject_[1]->Draw();
+
+	rotateArrowObject_->Draw();
 }
 
 void RubikCube::Debug() {
@@ -221,10 +258,69 @@ bool RubikCube::RequestRotation(int axis, int row, int dir) {
 		currentAxis_ = RotationAxis::Z;
 		rubikCubeState_ = std::make_unique<RotationZState>();
 	}
+	rotateArrowObject_->SetPosition(positionArrow_);
+
+
 	row_ = row;
 	rotation_ = dir; // 反転は呼び出し側(StageScene)で必要に応じて行う
 	StartRotationAnimation();
 	return true;
+}
+
+void RubikCube::GuideRotationAxis(int axis[], int row[]) {
+	if (isRotating_) return;
+
+	selectAxisPosition_[0] = {0,0,0};
+	selectAxisRotate_[0] = {0,0,0};
+
+	selectAxisPosition_[1] = {0,0,0};
+	selectAxisRotate_[1] = {0,0,0};
+
+	//X軸
+	if (axis[0] == row[0] && (axis[0] == 1 || axis[0] == -1)) {
+
+		selectAxisPosition_[0].y = float(row[1]);
+		selectAxisRotate_[0].z = kNinetyRadian_;// 軸回転
+
+		selectAxisPosition_[1].z = float(row[2]);
+		selectAxisRotate_[1].y = kNinetyRadian_;// 軸回転
+
+		positionArrow_ = { float(row[0]),0.0f,0.0f };
+	}
+	//Y軸
+	else if (axis[1] == row[1] && (axis[1] == 1 || axis[1] == -1)) {
+
+		selectAxisPosition_[0].z = float(row[2]);
+		selectAxisRotate_[0].y = kNinetyRadian_;// 軸回転
+
+		selectAxisPosition_[1].x = float(row[0]);
+		selectAxisRotate_[1].x = kNinetyRadian_;// 軸回転
+		
+		positionArrow_ = { 0.0f,float(row[1]),0.0f };
+
+	}
+	//Z軸
+	else if (axis[2] == row[2] && (axis[2] == 1 || axis[2] == -1)) {
+
+		selectAxisPosition_[0].x = float(row[0]);
+		selectAxisRotate_[0].x = kNinetyRadian_;// 軸回転
+
+		selectAxisPosition_[1].y = float(row[1]);
+		selectAxisRotate_[1].z = kNinetyRadian_;// 軸回転
+		
+		positionArrow_ = { 0.0f,0.0f,float(row[2]) };
+
+	}
+
+
+
+	selectAxisObject_[0]->SetPosition(selectAxisPosition_[0]);
+	selectAxisObject_[0]->SetRotation(selectAxisRotate_[0]);
+	selectAxisObject_[0]->Update();
+
+	selectAxisObject_[1]->SetPosition(selectAxisPosition_[1]);
+	selectAxisObject_[1]->SetRotation(selectAxisRotate_[1]);
+	selectAxisObject_[1]->Update();
 }
 
 void RubikCube::StartRotationAnimation() {

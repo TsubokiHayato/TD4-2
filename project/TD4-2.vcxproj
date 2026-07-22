@@ -118,6 +118,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="application\RubikCube\BaseRubikCubeState.cpp" />
+    <ClCompile Include="CubeMapConverter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="application\Order.cpp" />
     <ClCompile Include="application\scene\Sample\SampleScene.cpp" />
@@ -126,12 +128,25 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="application\scene\Stage\StageScene.cpp" />
     <ClCompile Include="application\scene\Clear\GameClearScene.cpp" />
     <ClCompile Include="application\scene\Over\GameOverScene.cpp" />
-    <ClCompile Include="application\scene\User\User1Scene.cpp" />
-    <ClCompile Include="application\scene\User\User2Scene.cpp" />
-    <ClCompile Include="application\scene\User\User3Scene.cpp" />
-    <ClCompile Include="application\scene\User\User4Scene.cpp" />
+    <ClCompile Include="application\scene\User\SatouScene.cpp" />
+    <ClCompile Include="application\scene\User\SanoScene.cpp" />
+    <ClCompile Include="application\scene\User\OosakiScene.cpp" />
+    <ClCompile Include="application\scene\User\TuboScene.cpp" />
+    <ClCompile Include="application\RubikCube\RubikCube.cpp" />
+    <ClCompile Include="application\stageClear\StageClear.cpp" />
+    <ClCompile Include="application\scene\Select\StageSelectScene.cpp" />
+    <ClCompile Include="Ui.cpp" />
+    <ClCompile Include="application\scene\Option\OptionScene.cpp" />
+    <ClCompile Include="application\settings\Settings.cpp" />
+    <ClCompile Include="application\audio\AudioManager.cpp" />
+    <ClCompile Include="StageBuilder.cpp" />
+    <ClCompile Include="StageLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="application\FaceType.h" />
+    <ClInclude Include="application\GridPos.h" />
+    <ClInclude Include="application\HoleData.h" />
+    <ClInclude Include="application\HoleType.h" />
     <ClInclude Include="application\Order.h" />
     <ClInclude Include="application\scene\Sample\SampleScene.h" />
     <ClInclude Include="application\scene\GameScenes.h" />
@@ -140,10 +155,23 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="application\scene\Stage\StageScene.h" />
     <ClInclude Include="application\scene\Clear\GameClearScene.h" />
     <ClInclude Include="application\scene\Over\GameOverScene.h" />
-    <ClInclude Include="application\scene\User\User1Scene.h" />
-    <ClInclude Include="application\scene\User\User2Scene.h" />
-    <ClInclude Include="application\scene\User\User3Scene.h" />
-    <ClInclude Include="application\scene\User\User4Scene.h" />
+    <ClInclude Include="application\scene\User\SatouScene.h" />
+    <ClInclude Include="application\scene\User\SanoScene.h" />
+    <ClInclude Include="application\scene\User\OosakiScene.h" />
+    <ClInclude Include="application\scene\User\TuboScene.h" />
+    <ClInclude Include="application\RubikCube\BaseRubikCubeState.h" />
+    <ClInclude Include="application\RubikCube\RubikCube.h" />
+    <ClInclude Include="application\stageClear\StageClear.h" />
+    <ClInclude Include="application\scene\Select\StageSelectScene.h" />
+    <ClInclude Include="Ui.h" />
+    <ClInclude Include="application\scene\Option\OptionScene.h" />
+    <ClInclude Include="application\settings\Settings.h" />
+    <ClInclude Include="application\audio\AudioManager.h" />
+    <ClInclude Include="application\MapChip.h" />
+    <ClInclude Include="application\WallData.h" />
+    <ClInclude Include="CubeMapConverter.h" />
+    <ClInclude Include="StageBuilder.h" />
+    <ClInclude Include="StageLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="EngineCore\EngineLib\EngineLib.vcxproj">

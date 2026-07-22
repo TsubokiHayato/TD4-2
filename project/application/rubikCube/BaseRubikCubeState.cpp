@@ -121,6 +121,25 @@ void RotationXState::Rotation(SixCube& sixCube, const uint32_t& row, int rotatio
 	RotationAround(sixCube, row, rotation, kLeftAround_, kRightAround_);
 }
 
+void RotationXState::SelectAxis(TuboEngine::Math::Vector3& selectAxisPosition, float row) {
+	//回転する列の変更
+	selectAxisPosition.x = row - 1.0f;
+}
+
+
+void RotationXState::RotationDirection(int rotation, TuboEngine::Math::Vector3& rotationArrow) {
+	//X軸回転
+	if (rotation == 0) {
+		rotationArrow.x -= kRotationAngle_;
+		rotationArrow.y = 0.0f;
+	}
+	else {
+		rotationArrow.x -= kRotationAngle_;
+		rotationArrow.y = kHundredEightyRadian_;//180度回転
+	}
+	rotationArrow.z = 0.0f;//変更なし
+}
+
 
 void RotationYState::Rotation(SixCube& sixCube, const uint32_t& row, int rotation) {
 	rotationRow_.num[0] = 2 + matrixNum;
@@ -177,8 +196,26 @@ void RotationYState::Rotation(SixCube& sixCube, const uint32_t& row, int rotatio
 
 	}
 
-
 	RotationAround(sixCube, row, rotation, kUpAround_, kDownAround_);
+}
+
+void RotationYState::SelectAxis(TuboEngine::Math::Vector3& selectAxisPosition, float row) {
+	//回転する列の変更
+	selectAxisPosition.y = -(row - 1.0f);
+}
+
+
+void RotationYState::RotationDirection(int rotation, TuboEngine::Math::Vector3& rotationArrow) {
+	//Y軸回転
+	if (rotation == 0) {
+		rotationArrow.x -= kRotationAngle_;
+		rotationArrow.z = -kNinetyRadian_;
+	}
+	else {
+		rotationArrow.x -= kRotationAngle_;
+		rotationArrow.z = kNinetyRadian_;
+	}
+	rotationArrow.y = 0.0f;//変更なし
 }
 
 
@@ -241,4 +278,22 @@ void RotationZState::Rotation(SixCube& sixCube, const uint32_t& row, int rotatio
 
 
 	RotationAround(sixCube, row, rotation, kFarAround_, kNearAround_);
+}
+
+void RotationZState::SelectAxis(TuboEngine::Math::Vector3& selectAxisPosition, float row) {
+	//回転する列の変更
+	selectAxisPosition.z = -(row - 1.0f);
+}
+
+void RotationZState::RotationDirection(int rotation, TuboEngine::Math::Vector3& rotationArrow) {
+	//Z軸回転
+	if (rotation == 0) {
+		rotationArrow.z += kRotationAngle_;
+		rotationArrow.y = kNinetyRadian_;
+	}
+	else {
+		rotationArrow.z -= kRotationAngle_;
+		rotationArrow.y = -kNinetyRadian_;
+	}
+	rotationArrow.x = 0.0f;//変更なし
 }

@@ -541,7 +541,9 @@ void StageScene::MouseCubeControl() {
 			for (int i = 0; i < 3; i++) {
 				pickCell_[i] = cell[i];
 				pickNormal_[i] = nrm[i];
-			}
+			}			
+      //回転できる方向の表示
+			rubikCube_->GuideRotationAxis(nrm, cell);
 		}
 	}
 

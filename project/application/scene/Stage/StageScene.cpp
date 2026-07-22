@@ -72,10 +72,14 @@ void StageScene::Update() {
 	}
 
 	// オービットカメラ(A/D回転・W/S上下・Q/Eズーム)
-	CameraRotation();
+	if (!ui_->ShouldHideGameplay()) {
+		CameraRotation();
+	}
 
 	// マウスドラッグでキューブの面を回す
-	MouseCubeControl();
+	if (!ui_->ShouldHideGameplay()) {
+		MouseCubeControl();
+	}
 
 	// パズル本体(キューブ操作＋クリア判定)
 	rubikCube_->Update();
@@ -140,12 +144,13 @@ void StageScene::Object3DDraw() {
 
 	background->Draw();
 
-	// 壁(穴つき)とキューブ本体+先端の描画
-	for (auto& wall : wallObjects_) {
-		wall->Draw();
+	if (!ui_->ShouldHideGameplay()) {
+		// 壁(穴つき)とキューブ本体+先端の描画
+		for (auto& wall : wallObjects_) {
+			wall->Draw();
+		}
+		rubikCube_->Draw();
 	}
-	rubikCube_->Draw();
-
 	// ポーズメニューキューブの描画
 	if (cubeScale_ > 0.01f) {
 
@@ -207,31 +212,29 @@ void StageScene::CubeAnimation() {
 	const float PI = 3.1415926f;
 	const float DEG90 = PI * 0.5f;
 
-	// 回転終了時に確定
 	if (prevRotating_ && !rotating) {
-
 		basecubeAngle_ += ui_->GetRotateDir() * DEG90;
-
-		// 正規化（-π〜πでもOK）
-		if (basecubeAngle_ >= PI * 2.0f)
-			basecubeAngle_ -= PI * 2.0f;
-		if (basecubeAngle_ < 0.0f)
-			basecubeAngle_ += PI * 2.0f;
+		if (basecubeAngle_ >= PI * 2.0f) basecubeAngle_ -= PI * 2.0f;
+		if (basecubeAngle_ < 0.0f) basecubeAngle_ += PI * 2.0f;
 	}
 
 	float drawAngle = basecubeAngle_;
 
 	if (rotating) {
-
 		float t = ui_->GetRotateTimer();
-
-		// ease
-		t = (t < 0.5f) ? 2.0f * t * t : 1.0f - std::pow(-2.0f * t + 2.0f, 2.0f) / 2.0f;
-
+		t = (t < 0.5f)
+			? 2.0f * t * t
+			: 1.0f - std::pow(-2.0f * t + 2.0f, 2.0f) / 2.0f;
 		drawAngle += ui_->GetRotateDir() * DEG90 * t;
 	}
 
-	pauseMenuCube_->SetRotation({0.0f, drawAngle, 0.0f});
+	// カメラの回転({pitch_, yaw_+PI, 0})と完全に一致する形に合わせてから
+	// メニュー選択の回転(drawAngle)を上乗せする
+	pauseMenuCube_->SetRotation({
+		pitch_,
+		yaw_ + PI + drawAngle,
+		0.0f
+		});
 
 	prevRotating_ = rotating;
 }

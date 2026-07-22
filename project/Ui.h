@@ -1,5 +1,6 @@
 #pragma once
 #include "Sprite.h"
+#include <memory>
 
 using TuboEngine::Math::Vector2;
 
@@ -30,6 +31,8 @@ public:
 	bool IsRotating(){ return isRotating_; }
 	//ポーズメニューが開いているか
 	bool IsPauseVisible()  {return isShowPause_;}
+	//ポーズメニューまたは操作説明が開いているか
+	bool ShouldHideGameplay() {return isShowPause_ || (pauseMenutype_ == PauseMenuType::Options);}
 	//回転方向の取得
 	int GetRotateDir() { return rotateDir_; }
 	//回転タイマーの取得
@@ -59,7 +62,7 @@ private:
 	Vector2 titleBaseSize_ = { 336.0f,49.0f };//タイトルへボタンのサイズ
 	Vector2 selectBaseSize_ = { 336.0f,49.0f };//セレクトへボタンのサイズ
 	Vector2 controlsMenuBaseSize_ = { 330.0f,40.0f };//操作説明メニューのサイズ
-	Vector2 controlsDetailBaseSize_ = { 200.0f,200.0f };//操作説明画面のサイズ
+	Vector2 controlsDetailBaseSize_ = { 500.0f,500.0f };//操作説明画面のサイズ
 	Vector2 selectguideBaseSize_ = { 330.0f,100.0f };//選択キーガイドのサイズ
 	Vector2 enterguideBaseSize_ = { 330.0f,100.0f };//決定キーガイドのサイズ
 

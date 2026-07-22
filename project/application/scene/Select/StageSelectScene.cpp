@@ -96,17 +96,17 @@ void StageSelectScene::ParticleDraw() {} // TODO: パーティクル描画
 //選択ブロックの切り替え
 void StageSelectScene::UpdateSelection() {
 	Input* input = Input::GetInstance();
-	// 左右キーで選択ブロックを切り替える
-	if (input->TriggerKey(DIK_RIGHT)) {
+	// 矢印キー または WASD で選択ブロックを切り替える
+	if (input->TriggerKey(DIK_RIGHT) || input->TriggerKey(DIK_D)) {
 		selectedX_ = (selectedX_ + 1) % kGridSize;
 	}
-	if (input->TriggerKey(DIK_LEFT)) {
+	if (input->TriggerKey(DIK_LEFT) || input->TriggerKey(DIK_A)) {
 		selectedX_ = (selectedX_ - 1 + kGridSize) % kGridSize;
 	}
-	if (input->TriggerKey(DIK_UP)) {
+	if (input->TriggerKey(DIK_UP) || input->TriggerKey(DIK_W)) {
 		selectedY_ = (selectedY_ - 1 + kGridSize) % kGridSize;
 	}
-	if (input->TriggerKey(DIK_DOWN)) {
+	if (input->TriggerKey(DIK_DOWN) || input->TriggerKey(DIK_S)) {
 		selectedY_ = (selectedY_ + 1) % kGridSize;
 	}
 }
@@ -126,8 +126,8 @@ void StageSelectScene::UpdateBlockAppearance() {
 void StageSelectScene::ConfirmSelection() {
 	Input* input = Input::GetInstance();
 
-	if (input->TriggerKey(DIK_RETURN)) {
-		int index = ToIndex(selectedX_, selectedY_); 
+	if (input->TriggerKey(DIK_RETURN) || input->TriggerKey(DIK_SPACE)) {
+		int index = ToIndex(selectedX_, selectedY_);
 		StageScene::SetSelectedStageIndex(index + 1);
 		SceneManager::GetInstance()->ChangeScene(STAGE);
 	}

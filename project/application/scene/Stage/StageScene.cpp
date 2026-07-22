@@ -68,10 +68,14 @@ void StageScene::Update() {
 	}
 
 	// オービットカメラ(A/D回転・W/S上下・Q/Eズーム)
-	CameraRotation();
+	if (!ui_->IsPauseVisible()) {
+		CameraRotation();
+	}
 
 	// マウスドラッグでキューブの面を回す
-	MouseCubeControl();
+	if (!ui_->IsPauseVisible()) {
+		MouseCubeControl();
+	}
 
 	// パズル本体(キューブ操作＋クリア判定)
 	rubikCube_->Update();

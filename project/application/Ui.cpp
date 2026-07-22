@@ -1,5 +1,8 @@
 #include "Ui.h"
 #include "Input.h"
+#include <algorithm>
+#include <cassert>
+#include <cmath>
 
 #ifdef USE_IMGUI
 #include "externals/imgui/imgui.h"
@@ -122,7 +125,7 @@ void Ui::DrawStageScene() {
 //ポーズメニューの更新
 void Ui::UpdatePauseMenu() {
 	//ポーズ画面表示
-	if (Input::GetInstance()->TriggerKey(DIK_Q)) {
+	if (Input::GetInstance()->TriggerKey(DIK_ESCAPE)) {
 
 		//操作説明画面を閉じる
 		if (pauseMenutype_ == PauseMenuType::Options) {
@@ -148,14 +151,14 @@ void Ui::UpdatePauseMenu() {
 		}
 		if (!isRotating_) {
 		//ポーズメニューの選択
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_LEFT) || TuboEngine::Input::GetInstance()->TriggerKey(DIK_A)) {
+		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_LEFT)) {
 
 			rotateDir_ = -1;
 			rotateTimer_ = 0.0f;
 			isRotating_ = true;
 		}
 
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RIGHT) || TuboEngine::Input::GetInstance()->TriggerKey(DIK_D)) {
+		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RIGHT)) {
 
 			rotateDir_ = 1;
 			rotateTimer_ = 0.0f;

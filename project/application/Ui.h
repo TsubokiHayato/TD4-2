@@ -1,5 +1,6 @@
 #pragma once
 #include "Sprite.h"
+#include <memory>
 
 using TuboEngine::Math::Vector2;
 

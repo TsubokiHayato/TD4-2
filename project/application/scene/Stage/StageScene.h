@@ -2,7 +2,7 @@
 #include "IScene.h"
 #include "Camera.h"
 #include "Object3d.h"
-#include  "Ui.h"
+#include "Ui.h"
 
 #include "rubikCube/RubikCube.h"
 #include "stageClear/StageClear.h"
@@ -124,7 +124,7 @@ private:
 	const float PI = 3.1415926f;
 	const float DEG90 = PI / 2.0f;
 
-	float cubeBaseScale_ = 1.5f;
+	float cubeBaseScale_ = 3.5f;
 	float cubeScale_ = 0.0f;
 	float basecubeAngle_ = 0.0f;
 	bool prevRotating_ = false;

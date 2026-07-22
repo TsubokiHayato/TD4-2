@@ -16,7 +16,7 @@
     <ClCompile Include="application\RubikCube\RubikCube.cpp" />
     <ClCompile Include="application\RubikCube\BaseRubikCubeState.cpp" />
     <ClCompile Include="application\stageClear\StageClear.cpp" />
-    <ClCompile Include="Ui.cpp" />
+    <ClCompile Include="application\Ui.cpp" />
     <ClCompile Include="application\scene\Option\OptionScene.cpp" />
     <ClCompile Include="application\settings\Settings.cpp" />
     <ClCompile Include="application\audio\AudioManager.cpp" />
@@ -41,7 +41,7 @@
     <ClInclude Include="application\RubikCube\RubikCube.h" />
     <ClInclude Include="application\RubikCube\BaseRubikCubeState.h" />
     <ClInclude Include="application\stageClear\StageClear.h" />
-    <ClInclude Include="Ui.h" />
+    <ClInclude Include="application\Ui.h" />
     <ClInclude Include="application\scene\Option\OptionScene.h" />
     <ClInclude Include="application\settings\Settings.h" />
     <ClInclude Include="application\audio\AudioManager.h" />
@@ -55,6 +55,7 @@
     <ClInclude Include="application\WallData.h" />
     <ClInclude Include="StageBuilder.h" />
     <ClInclude Include="application\scene\Select\StageSelectScene.h" />
+    <ClInclude Include="application\scene\Stage\Ui.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="application">

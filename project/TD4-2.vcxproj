@@ -135,7 +135,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="application\RubikCube\RubikCube.cpp" />
     <ClCompile Include="application\stageClear\StageClear.cpp" />
     <ClCompile Include="application\scene\Select\StageSelectScene.cpp" />
-    <ClCompile Include="Ui.cpp" />
+    <ClCompile Include="application\Ui.cpp" />
     <ClCompile Include="application\scene\Option\OptionScene.cpp" />
     <ClCompile Include="application\settings\Settings.cpp" />
     <ClCompile Include="application\audio\AudioManager.cpp" />
@@ -151,6 +151,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="application\scene\Sample\SampleScene.h" />
     <ClInclude Include="application\scene\GameScenes.h" />
     <ClInclude Include="application\scene\SceneRegistration.h" />
+    <ClInclude Include="application\scene\Stage\Ui.h" />
     <ClInclude Include="application\scene\Title\TitleScene.h" />
     <ClInclude Include="application\scene\Stage\StageScene.h" />
     <ClInclude Include="application\scene\Clear\GameClearScene.h" />
@@ -163,7 +164,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="application\RubikCube\RubikCube.h" />
     <ClInclude Include="application\stageClear\StageClear.h" />
     <ClInclude Include="application\scene\Select\StageSelectScene.h" />
-    <ClInclude Include="Ui.h" />
+    <ClInclude Include="application\Ui.h" />
     <ClInclude Include="application\scene\Option\OptionScene.h" />
     <ClInclude Include="application\settings\Settings.h" />
     <ClInclude Include="application\audio\AudioManager.h" />

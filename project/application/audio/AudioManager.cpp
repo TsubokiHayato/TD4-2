@@ -24,6 +24,36 @@ void AudioManager::PlayBgm(const std::string& fileName) {
 	bgmPlaying_ = true;
 }
 
+void AudioManager::PlayBgmFadeIn(const std::string& fileName, float seconds) {
+	// 既に同じ曲が鳴っているなら、フェードし直さず音量だけ合わせる。
+	if (bgmPlaying_ && bgmFile_ == fileName) {
+		ApplyBgmVolume();
+		return;
+	}
+	StopBgm();
+	bgm_ = std::make_unique<TuboEngine::Audio>();
+	bgm_->Initialize(fileName);
+	bgm_->Play(true, 0.0f); // 無音から開始し、UpdateFade で目標音量まで上げる
+	bgmFile_ = fileName;
+	bgmPlaying_ = true;
+
+	fading_ = true;
+	fadeElapsed_ = 0.0f;
+	fadeDuration_ = (seconds > 0.0f) ? seconds : 0.0001f;
+}
+
+void AudioManager::UpdateFade(float dt) {
+	if (!fading_ || !bgm_ || !bgmPlaying_)
+		return;
+	fadeElapsed_ += dt;
+	float t = fadeElapsed_ / fadeDuration_;
+	if (t >= 1.0f) {
+		t = 1.0f;
+		fading_ = false; // フェード完了
+	}
+	bgm_->SetVolume(Settings::GetInstance()->bgmVolume * t);
+}
+
 void AudioManager::StopBgm() {
 	if (bgm_) {
 		bgm_->Stop();
@@ -31,6 +61,7 @@ void AudioManager::StopBgm() {
 	}
 	bgmPlaying_ = false;
 	bgmFile_.clear();
+	fading_ = false; // 停止したらフェードも解除
 }
 
 void AudioManager::ApplyBgmVolume() {

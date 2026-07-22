@@ -29,6 +29,33 @@
       "verticalAlign": 0
     },
     {
+      "anchor": 2,
+      "color": [
+        0.85,
+        0.85,
+        0.9,
+        1.0
+      ],
+      "font": "YasashisaGothicBold-V2",
+      "fontSize": 28.0,
+      "horizontalAlign": 1,
+      "margin": [
+        0.0,
+        0.0
+      ],
+      "name": "subtitle",
+      "position": [
+        640.0,
+        220.0
+      ],
+      "relativeAnchor": 0,
+      "relativeGap": 8.0,
+      "relativeTo": "",
+      "scale": 1.0,
+      "text": "～ まわして そろえる 立体パズル ～",
+      "verticalAlign": 0
+    },
+    {
       "anchor": 0,
       "color": [
         1.0,
@@ -187,7 +214,7 @@
       "relativeGap": 8.0,
       "relativeTo": "",
       "scale": 1.0,
-      "text": "Ver 1.0",
+      "text": "Ver 2.0",
       "verticalAlign": 2
     }
   ]

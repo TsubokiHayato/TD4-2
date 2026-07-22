@@ -59,10 +59,13 @@ public:
 	//指定番号のステージ(壁+キューブCSV)を読み込む
 	void LoadStage(int index);
 
+	static void SetSelectedStageIndex(int index) { pendingStageIndex_ = index; }
+
 private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
 	std::unique_ptr<TuboEngine::Object3d>pauseMenuCube_;//ポーズメニューキューブ
 	std::unique_ptr<Ui>ui_;//UIクラス
+	std::unique_ptr<TuboEngine::Object3d> background;
 
 	// --- パズル本体 ---
 	std::unique_ptr<RubikCube> rubikCube_;                            // 先端つきキューブ(他者作成、getterのみ利用)
@@ -117,10 +120,12 @@ private:
 	float yaw_ = 0.0f;                                       // 左右
 	float pitch_ = 0.0f;                                     // 上下
 
+	static int pendingStageIndex_; //セレクトシーンで選ばれたステージ番号
+
 	const float PI = 3.1415926f;
 	const float DEG90 = PI / 2.0f;
 
-	float cubeBaseScale_ = 1.5f;
+	float cubeBaseScale_ = 3.5f;
 	float cubeScale_ = 0.0f;
 	float basecubeAngle_ = 0.0f;
 	bool prevRotating_ = false;

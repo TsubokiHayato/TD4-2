@@ -59,6 +59,13 @@ public:
 	/// </summary>
 	bool IsRotating() const { return isRotating_; }
 
+	/// <summary>
+	/// キューブ全体を Y 軸まわりに回して「見せる」ための角度(ラジアン)を設定する。
+	/// 描画時だけ適用する“見た目専用”の回転で、面回転判定に使う論理座標は変えない。
+	/// 既定は 0（＝何もしない）なので、設定しない Title/Stage では従来どおり。
+	/// </summary>
+	void SetWholeSpinYaw(float angleRad) { wholeSpinYaw_ = angleRad; }
+
 private:
 	/// <summary>
 	// 3x3行列
@@ -131,6 +138,9 @@ private:
 	const float kRotateSpeedRad_ = (float(M_PI) / 2.0f) / 20.0f;
 	//回転中かどうか
 	bool isRotating_ = false;
+
+	// 描画時だけ適用する、キューブ全体の Y 軸回転角(ラジアン)。0 なら通常描画。
+	float wholeSpinYaw_ = 0.0f;
 
 	TuboEngine::Camera* camera_;
 };

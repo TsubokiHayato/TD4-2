@@ -1,6 +1,12 @@
 #pragma once
 #include <cstdint>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+#include "Vector3.h"
+#include <memory>
+
 struct OneCube {
 	uint32_t cube[3][3];
 };
@@ -22,6 +28,16 @@ public:
 	/// <param name="row">回転列</param>
 	/// <param name="rotation">回す方向</param>
 	virtual void Rotation(SixCube& sixCube, const uint32_t& row,int rotation) = 0;
+
+	/// <summary>
+	/// 更新処理(主に回転軸可視化の位置など)
+	/// </summary>
+	/// <param name="selectAxisPosition">回転列の場所</param>
+	/// <param name="row">選択された回転列</param>
+	/// <param name="rotationArrow">矢印の回転方向</param>
+	virtual void SelectAxis(TuboEngine::Math::Vector3& selectAxisPosition, float row) = 0;
+
+	virtual void RotationDirection(int rotation, TuboEngine::Math::Vector3& rotationArrow) = 0;
 
 
 protected:
@@ -55,6 +71,9 @@ protected:
 
 	//開店前のキューブ1面
 	SixCube prevSixCube_ = {};
+
+	//回転角度 3度ずつ回転
+	const float kRotationAngle_ = 3.0f * float(M_PI) / 180.0f;
 };
 
 /// <summary>
@@ -70,9 +89,25 @@ public:
 	/// <param name="rotation">回す方向</param>
 	void Rotation(SixCube& sixCube, const uint32_t& row, int rotation) override;
 
+	/// <summary>
+	/// 軸の選択
+	/// </summary>
+	/// <param name="selectAxisPosition">選択の可視化する位置</param>
+	/// <param name="row">列</param>
+	void SelectAxis(TuboEngine::Math::Vector3& selectAxisPosition, float row) override;
+
+	/// <summary>
+	/// 回転方向の可視化
+	/// </summary>
+	/// <param name="dir">回転方向</param>
+	/// <param name="rotationArrow">矢印モデルの回転</param>
+	void RotationDirection(int dir, TuboEngine::Math::Vector3& rotationArrow) override;
+
 private:
 	const uint32_t kLeftAround_ = 2 + matrixNum;
 	const uint32_t kRightAround_ = 4 + matrixNum;
+	//回転角度 180度
+	const float kHundredEightyRadian_ = float(M_PI);
 };
 
 /// <summary>
@@ -88,9 +123,26 @@ public:
 	/// <param name="rotation">回す方向</param>
 	void Rotation(SixCube& sixCube, const uint32_t& row, int rotation) override;
 
+
+	/// <summary>
+	/// 軸の選択
+	/// </summary>
+	/// <param name="selectAxisPosition">選択の可視化する位置</param>
+	/// <param name="row">列</param>
+	void SelectAxis(TuboEngine::Math::Vector3& selectAxisPosition, float row) override;
+
+	/// <summary>
+	/// 回転方向の可視化
+	/// </summary>
+	/// <param name="dir">回転方向</param>
+	/// <param name="rotationArrow">矢印モデルの回転</param>
+	void RotationDirection(int dir, TuboEngine::Math::Vector3& rotationArrow) override;
+
 private:
 	const uint32_t kUpAround_ = 1 + matrixNum;
 	const uint32_t kDownAround_ = 5 + matrixNum;
+	//回転角度 90度
+	const float kNinetyRadian_ = 90.0f * float(M_PI) / 180.0f;
 };
 
 /// <summary>
@@ -106,7 +158,23 @@ public:
 	/// <param name="rotation">回す方向</param>
 	void Rotation(SixCube& sixCube, const uint32_t& row, int rotation) override;
 
+	/// <summary>
+	/// 軸の選択
+	/// </summary>
+	/// <param name="selectAxisPosition">選択の可視化する位置</param>
+	/// <param name="row">列</param>
+	void SelectAxis(TuboEngine::Math::Vector3& selectAxisPosition, float row) override;
+
+	/// <summary>
+	/// 回転方向の可視化
+	/// </summary>
+	/// <param name="dir">回転方向</param>
+	/// <param name="rotationArrow">矢印モデルの回転</param>
+	void RotationDirection(int dir, TuboEngine::Math::Vector3& rotationArrow) override;
+
 private:
 	const uint32_t kNearAround_ = 3 + matrixNum;
 	const uint32_t kFarAround_ = 6 + matrixNum;
+	//回転角度 90度
+	const float kNinetyRadian_ = 90.0f * float(M_PI) / 180.0f;
 };

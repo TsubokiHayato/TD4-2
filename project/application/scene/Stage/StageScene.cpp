@@ -502,6 +502,8 @@ void StageScene::MouseCubeControl() {
 		if (PickBlock(mx, my, cell, nrm)) {
 			pickValid_ = true;
 			for (int i = 0; i < 3; i++) { pickCell_[i] = cell[i]; pickNormal_[i] = nrm[i]; }
+			//回転できる方向の表示
+			rubikCube_->GuideRotationAxis(nrm, cell);
 		}
 	}
 

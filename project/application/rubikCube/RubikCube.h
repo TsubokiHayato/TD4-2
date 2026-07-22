@@ -68,6 +68,13 @@ public:
 	/// </summary>
 	void SetWholeSpinYaw(float angleRad) { wholeSpinYaw_ = angleRad; }
 
+	/// <summary>
+	/// 回転軸ガイド／方向矢印(操作補助UI)を表示するか。既定は true。
+	/// タイトルやクリアなど「見せるだけ」の場面では false にして、
+	/// ゲーム操作用のガイドがキューブに重ならないようにする。
+	/// </summary>
+	void SetGuideVisible(bool visible) { guideVisible_ = visible; }
+
 private:
 
 	/// ------
@@ -161,6 +168,8 @@ private:
 
 	// 描画時だけ適用する、キューブ全体の Y 軸回転角(ラジアン)。0 なら通常描画。
 	float wholeSpinYaw_ = 0.0f;
+	// 操作補助UI(選択軸ガイド・方向矢印)を描画するか。Title/Clear では false にする。
+	bool guideVisible_ = true;
 	/// -- 回転方向の矢印 --
 	std::unique_ptr<TuboEngine::Object3d> rotateArrowObject_;
 	TuboEngine::Math::Vector3 positionArrow_{};//座標位置

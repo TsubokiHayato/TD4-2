@@ -37,6 +37,7 @@ void GameClearScene::Initialize() {
 	// クリア演出: 画面中央で面を次々に回し続けるルービックキューブ。
 	rubikCube_ = std::make_unique<RubikCube>();
 	rubikCube_->Initialize(camera_.get());
+	rubikCube_->SetGuideVisible(false); // 操作用ガイド／矢印は見せない（重なり防止）
 	autoRotateTimer_ = 0;
 
 	// 「ゲームクリア！」などの文字は JSON で定義（ImGui の TextManager で調整可）。

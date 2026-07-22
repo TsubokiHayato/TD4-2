@@ -178,44 +178,49 @@ void RubikCube::Update() {
 }
 
 void RubikCube::Draw() {
-	// 全体回転の指定が無ければ従来どおりそのまま描画（Title/Stage はこちら）。
+	// --- キューブ本体＋先端の描画 ---
 	if (wholeSpinYaw_ == 0.0f) {
+		// 全体回転の指定が無ければ従来どおりそのまま描画（Title/Stage はこちら）。
 		for (auto& object : objects_) {
 			object->Draw();
 		}
 		for (auto& tip : tips_) {
 			tip->Draw();
 		}
-		return;
+	} else {
+		// キューブ全体を Y 軸まわりに wholeSpinYaw_ だけ回した“見た目”で描画する。
+		// 位置と向きを同じ軸・同じ角度で合成する規約は UpdateRotationAnimation と同一。
+		// 論理座標(GetPosition/GetRotation が返す値)は最後に元へ戻すので、面回転判定は無傷。
+		auto drawSpun = [&](TuboEngine::Object3d* o) {
+			TuboEngine::Math::Vector3 pos = o->GetPosition();
+			TuboEngine::Math::Vector3 rot = o->GetRotation();
+
+			o->SetPosition(RotateAroundAxis(pos, RotationAxis::Y, wholeSpinYaw_));
+			Mat3 spun = Mat3Mul(AxisRotationMat3(RotationAxis::Y, wholeSpinYaw_), EulerToMat3(rot));
+			o->SetRotation(Mat3ToEuler(spun));
+
+			o->Update(); // 回した変換で CBuffer を作り直してから描画
+			o->Draw();
+
+			o->SetPosition(pos); // 論理値を復元（次フレームの面回転判定のため）
+			o->SetRotation(rot);
+		};
+		for (auto& object : objects_) {
+			drawSpun(object.get());
+		}
+		for (auto& tip : tips_) {
+			drawSpun(tip.get());
+		}
 	}
 
-	// キューブ全体を Y 軸まわりに wholeSpinYaw_ だけ回した“見た目”で描画する。
-	// 位置と向きを同じ軸・同じ角度で合成する規約は UpdateRotationAnimation と同一。
-	// 論理座標(GetPosition/GetRotation が返す値)は最後に元へ戻すので、面回転判定は無傷。
-	auto drawSpun = [&](TuboEngine::Object3d* o) {
-		TuboEngine::Math::Vector3 pos = o->GetPosition();
-		TuboEngine::Math::Vector3 rot = o->GetRotation();
-
-		o->SetPosition(RotateAroundAxis(pos, RotationAxis::Y, wholeSpinYaw_));
-		Mat3 spun = Mat3Mul(AxisRotationMat3(RotationAxis::Y, wholeSpinYaw_), EulerToMat3(rot));
-		o->SetRotation(Mat3ToEuler(spun));
-
-		o->Update(); // 回した変換で CBuffer を作り直してから描画
-		o->Draw();
-
-		o->SetPosition(pos); // 論理値を復元（次フレームの面回転判定のため）
-		o->SetRotation(rot);
-	};
-	for (auto& object : objects_) {
-		drawSpun(object.get());
+	// --- 操作補助UI(選択軸ガイド・方向矢印) ---
+	// ゲーム操作用なので、表示フラグが立っているときだけ描く（既定 true = Stage）。
+	// Title/Clear は SetGuideVisible(false) にしてあるので出ない。
+	if (guideVisible_) {
+		selectAxisObject_[0]->Draw();
+		selectAxisObject_[1]->Draw();
+		rotateArrowObject_->Draw();
 	}
-	for (auto& tip : tips_) {
-		drawSpun(tip.get());
-	}
-	selectAxisObject_[0]->Draw();
-	selectAxisObject_[1]->Draw();
-
-	rotateArrowObject_->Draw();
 }
 
 void RubikCube::Debug() {

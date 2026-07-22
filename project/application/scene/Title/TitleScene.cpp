@@ -57,6 +57,7 @@ void TitleScene::Initialize() {
 	// タイトル演出: 自動で回り続けるルービックキューブ
 	rubikCube_ = std::make_unique<RubikCube>();
 	rubikCube_->Initialize(camera_.get());
+	rubikCube_->SetGuideVisible(false); // タイトル演出では操作ガイド／矢印を出さない
 	autoRotateTimer_ = 0;
 
 	auto* tm = TextManager::GetInstance();

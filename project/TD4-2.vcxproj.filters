@@ -23,6 +23,8 @@
     <ClCompile Include="CubeMapConverter.cpp" />
     <ClCompile Include="StageLoader.cpp" />
     <ClCompile Include="StageBuilder.cpp" />
+    <ClCompile Include="application\scene\Tutorial\TutorialScene.cpp" />
+    <ClCompile Include="TutorialUI.cpp" />
     <ClCompile Include="application\scene\Select\StageSelectScene.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -54,6 +56,8 @@
     <ClInclude Include="StageLoader.h" />
     <ClInclude Include="application\WallData.h" />
     <ClInclude Include="StageBuilder.h" />
+    <ClInclude Include="application\scene\Tutorial\TutorialScene.h" />
+    <ClInclude Include="TutorialUI.h" />
     <ClInclude Include="application\scene\Select\StageSelectScene.h" />
   </ItemGroup>
   <ItemGroup>

@@ -75,7 +75,7 @@ private:
 	std::vector<WallData> wallData_;                                  // 壁配置情報(StageBuilder由来)
 	SixCube required_{};                                              // 先端が必要な位置
 	bool cleared_ = false;                                            // クリア済みフラグ
-	bool editorEnabled_ = true;                                       // クリア判定を止めて編集に集中
+	bool editorEnabled_ = false;                                      // true でクリア判定を止めて編集に集中(通常プレイは false)
 	bool rebuildRequested_ = false;                                   // 次フレームで壁を作り直す(描画中の破棄回避)
 	bool applyCubeState_ = false;                                     // 次フレームでキューブ先端をCSVから再適用
 	SixCube prevCubeState_{};                                         // 前フレームのキューブ状態(操作検知用)
@@ -84,7 +84,9 @@ private:
 	std::string stagePath_ = "Resources/4209_stages/stage1.csv";     // 壁CSVのパス
 	std::string cubeStagePath_ = "Resources/4209_stages/cube1.csv";  // キューブCSVのパス
 	int stageIndex_ = 1;                                             // 現在のステージ番号
-	static constexpr int kStageCount = 2;                            // 用意されているステージ数
+	static constexpr int kStageCount = 9;                            // 用意されているステージ数(セレクトの3x3=9に合わせる)
+	int editStageNo_ = 1;                                            // レベルエディターで編集対象に読み込むステージ番号
+	static bool stageCleared_[kStageCount];                         // 各ステージのクリア済みフラグ(全クリア判定用・シーンをまたいで保持)
 
 	// --- マウスによるキューブ回転(3Dピッキング) ---
 	bool dragging_ = false;      // 左ドラッグ中か

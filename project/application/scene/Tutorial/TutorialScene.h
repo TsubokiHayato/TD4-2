@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Object3d.h"
 #include  "Ui.h"
+#include "TutorialUI.h"
 
 #include "rubikCube/RubikCube.h"
 #include "stageClear/StageClear.h"
@@ -67,18 +68,25 @@ public:
 		CameraZoom,    // QEでズーム
 		CubeRotate,    // ドラッグでキューブ回転
 		Transparent,   // Tで壁を透明化
+		Distance,      // 壁の距離を調整
 		Goal,          // ゴールへ
 		Clear
 	};
 
 	struct TutorialStep
 	{
-		TutorialState action;
-		std::string text;
-		bool completed = false;
+		TutorialState action;;
+
+		TutorialUI::GuideType guide;
+
+		int targetCount;
+
+		int currentCount;
+
+		bool completed;
 	};
 
-	TutorialState tutorialState_ = TutorialState::CameraMove;
+	
 	std::vector<TutorialStep> tutorialSteps_;
 	int currentStep_ = 0;
 
@@ -92,7 +100,11 @@ public:
 
 	void UpdateTransparentTutorial();
 
+	void UpdateDistanceTutorial();
+
 	void UpdateGoalTutorial();
+
+	void UpdateClearTutorial();
 
 private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
@@ -160,24 +172,11 @@ private:
 	float basecubeAngle_ = 0.0f;
 	bool prevRotating_ = false;
 
-	// --- テキスト ---
-	std::unique_ptr<TuboEngine::Sprite> cameraRotateText_;
-	std::unique_ptr<TuboEngine::Sprite> cameraZoomText_;
-	std::unique_ptr<TuboEngine::Sprite> cubeRotateText_;
-	std::unique_ptr<TuboEngine::Sprite> transparentText_;
-	std::unique_ptr<TuboEngine::Sprite> goalText_;
+	
+	std::unique_ptr<TutorialUI> tutorialUI_;
 
-	Vector2 cameraRotateTextPos_ = { 0.0f, 0.0f };
-	Vector2 cameraZoomTextPos_ = { 0.0f, 0.0f };
-	Vector2 cubeRotateTextPos_ = { 0.0f, 0.0f };
-	Vector2 transparentTextPos_ = { 0.0f, 0.0f };
-	Vector2 goalTextPos_ = { 0.0f, 0.0f };
-
-	Vector2 cameraRotateTextSize_ = { 1017.0f, 70.0f };
-	Vector2 cameraZoomTextSize_ = { 0.0f, 0.0f };
-	Vector2 cubeRotateTextSize_ = { 0.0f, 0.0f };
-	Vector2 transparentTextSize_ = { 0.0f, 0.0f };
-	Vector2 goalTextSize_ = { 0.0f, 0.0f };
-
-	Vector2 center_ = { 640.0f,360.0f };//画面の中心座標
+	// 壁の透明化フラグ
+	bool isTransparent_ = false;
+	float wallAlpha_;
+	float alpha_ = 0.2f;
 };

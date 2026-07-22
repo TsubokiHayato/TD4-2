@@ -49,28 +49,62 @@ void TutorialScene::Initialize() {
 
 	TuboEngine::TextManager::GetInstance()->LoadTextLayout("Resources/Text/Stage.json");
 
+	tutorialUI_ = std::make_unique<TutorialUI>();
+	tutorialUI_->Initialize();
+
 	tutorialSteps_ =
 	{
-		{TutorialState::CameraMove,  "WASDでカメラを動かしましょう"},
-		{TutorialState::CameraZoom,  "Q/Eでズームしましょう"},
-		{TutorialState::CubeRotate,  "ドラッグでキューブを回しましょう"},
-		{TutorialState::Transparent, "Tキーで壁を透明にしましょう"},
-		{TutorialState::Goal,        "ゴールまで移動しましょう"},
+		 {
+		TutorialState::CameraMove,
+		TutorialUI::GuideType::CameraRotate,
+		5,
+		0,
+		false
+	},
+	{
+		TutorialState::CameraZoom,
+		TutorialUI::GuideType::CameraZoom,
+		4,
+		0,
+		false
+	},
+	{
+		TutorialState::CubeRotate,
+		TutorialUI::GuideType::CubeRotate,
+		3,
+		0,
+		false
+	},
+	{
+		TutorialState::Transparent,
+		TutorialUI::GuideType::Transparent,
+		2,
+		0,
+		false
+	},
+		{
+		TutorialState::Distance,
+		TutorialUI::GuideType::Distance,
+		5,
+		0,
+		false
+	},
+	{
+		TutorialState::Goal,
+		TutorialUI::GuideType::Goal,
+		1,
+		0,
+		false
+	},
+	{
+		TutorialState::Clear,
+		TutorialUI::GuideType::Success,
+		1,
+		0,
+		false
+	}
 	};
-	cameraRotateText_ = std::make_unique<TuboEngine::Sprite>();
-	cameraRotateText_->Initialize("Resources/Textures/Tutorial/cameraRotateTutorial.png");
-	cameraRotateText_->SetAnchorPoint({ 0.5f,0.5f });
-	cameraRotateText_->SetPosition(center_);
-	cameraRotateText_->SetSize({ 1270,0 });
-	/*cameraZoomText_ = std::make_unique<TuboEngine::Sprite>();
-	cameraZoomText_->Initialize("Resources/Textures/Tutorial/cameraZoomTutorial.png");
-	cubeRotateText_ = std::make_unique<TuboEngine::Sprite>();
-	cubeRotateText_->Initialize("Resources/Textures/Tutorial/cubeRotateTutorial.png");
-	transparentText_ = std::make_unique<TuboEngine::Sprite>();
-	transparentText_->Initialize("Resources/Textures/Tutorial/transparentTutorial.png");
-	goalText_ = std::make_unique<TuboEngine::Sprite>();
-	goalText_->Initialize("Resources/Textures/Tutorial/goalTutorial.png");*/
-
+	
 }
 
 void TutorialScene::Update() {
@@ -91,31 +125,21 @@ void TutorialScene::Update() {
 	// 壁とキューブの間隔を調整
 	CubeMarginChange();
 
-	switch (tutorialState_)
-	{
-	case TutorialState::CameraMove:
-		UpdateCameraMoveTutorial();
-		break;
-
-	case TutorialState::CameraZoom:
-		UpdateZoomTutorial();
-		break;
-
-	case TutorialState::CubeRotate:
-		UpdateCubeRotateTutorial();
-		break;
-
-	case TutorialState::Transparent:
-		UpdateTransparentTutorial();
-		break;
-
-	case TutorialState::Goal:
-		UpdateGoalTutorial();
-		break;
-
-	case TutorialState::Clear:
-		break;
+	// Tキーで壁の透明化を切り替える
+	if (Input::GetInstance()->TriggerKey(DIK_T)) {
+		isTransparent_ = !isTransparent_;
 	}
+
+	wallAlpha_ = isTransparent_ ? alpha_ : 1.0f;
+
+	// 各セル(壁・コーン・四角)のトランスフォーム等の更新
+	for (auto& wall : wallObjects_) {
+		wall->SetModelColor({ 1,1,1,wallAlpha_ });
+	}
+
+	UpdateTutorial();
+	tutorialUI_->Update();
+	
 
 	// マウスドラッグでキューブの面を回す
 	MouseCubeControl();
@@ -186,6 +210,7 @@ void TutorialScene::Object3DDraw() {
 void TutorialScene::SpriteDraw() {
 	//UIの描画
 	ui_->DrawStageScene();
+	tutorialUI_->Draw();
 	//TextManager
 	TuboEngine::TextManager::GetInstance()->DrawAll();
 
@@ -420,87 +445,163 @@ void TutorialScene::CubeMarginChange()
 	}
 }
 
+
 void TutorialScene::UpdateTutorial()
 {
 	if (currentStep_ >= tutorialSteps_.size())
 		return;
+	auto& step = tutorialSteps_[currentStep_];
 
-	switch (tutorialSteps_[currentStep_].action)
+	tutorialUI_->ShowGuide(step.guide);
+
+	switch (step.action)
 	{
 	case TutorialState::CameraMove:
-		if (CameraMoved())
-			currentStep_++;
+		UpdateCameraMoveTutorial();
 		break;
 
 	case TutorialState::CameraZoom:
-		if (CameraZoomed())
-			currentStep_++;
+		UpdateZoomTutorial();
 		break;
 
 	case TutorialState::CubeRotate:
-		if (moveCount_ > 0)
-			currentStep_++;
+		UpdateCubeRotateTutorial();
 		break;
 
 	case TutorialState::Transparent:
-		if (isTransparent_)
-			currentStep_++;
+		UpdateTransparentTutorial();
+		break;
+	case TutorialState::Distance:
+		UpdateDistanceTutorial();
 		break;
 
 	case TutorialState::Goal:
-		if (cleared_)
-			currentStep_++;
+		UpdateGoalTutorial();
+		break;
+	case TutorialState::Clear:
+
 		break;
 	}
+
 }
 
 void TutorialScene::UpdateCameraMoveTutorial()
 {
-	static float totalMove = 0.0f;
+	auto& step = tutorialSteps_[currentStep_];
 
-	if (Input::GetInstance()->PushKey(DIK_W)) totalMove++;
-	if (Input::GetInstance()->PushKey(DIK_A)) totalMove++;
-	if (Input::GetInstance()->PushKey(DIK_S)) totalMove++;
-	if (Input::GetInstance()->PushKey(DIK_D)) totalMove++;
+	if (Input::GetInstance()->TriggerKey(DIK_A))
+		step.currentCount++;
 
-	if (totalMove > 20)
+	if (Input::GetInstance()->TriggerKey(DIK_D))
+		step.currentCount++;
+
+	tutorialUI_->SetGauge(step.currentCount, step.targetCount);
+	if (step.currentCount >= step.targetCount)
 	{
-		tutorialState_ = TutorialState::CameraZoom;
+		step.completed = true;
+		currentStep_++;
 	}
 }
 
 void TutorialScene::UpdateZoomTutorial()
 {
-	if (Input::GetInstance()->PushKey(DIK_Q) ||
-		Input::GetInstance()->PushKey(DIK_E))
+	auto& step = tutorialSteps_[currentStep_];
+
+	if (Input::GetInstance()->TriggerKey(DIK_Q) ||
+		Input::GetInstance()->TriggerKey(DIK_E))
 	{
-		tutorialState_ = TutorialState::CubeRotate;
+		step.currentCount++;
+	}
+
+	tutorialUI_->SetGauge(step.currentCount, step.targetCount);
+
+	if (step.currentCount >= step.targetCount)
+	{
+		step.completed = true;
+		currentStep_++;
 	}
 }
 
 void TutorialScene::UpdateCubeRotateTutorial()
 {
-	if (moveCount_ >= 1) {
-		tutorialState_ = TutorialState::Transparent;
+	auto& step = tutorialSteps_[currentStep_];
+
+	if ((moveCount_) > 0) {
+		step.currentCount++;
+	}
+
+
+	tutorialUI_->SetGauge(step.currentCount, step.targetCount);
+
+	if (step.currentCount >= step.targetCount)
+	{
+		step.completed = true;
+		currentStep_++;
 	}
 }
 
 void TutorialScene::UpdateTransparentTutorial()
 {
+	auto& step = tutorialSteps_[currentStep_];
+
 	if (Input::GetInstance()->TriggerKey(DIK_T))
 	{
-		tutorialState_ = TutorialState::Goal;
+		step.currentCount++;
+	}
+
+	tutorialUI_->SetGauge(step.currentCount, step.targetCount);
+
+	if (step.currentCount >= step.targetCount)
+	{
+		step.completed = true;
+		currentStep_++;
+	}
+}
+
+void TutorialScene::UpdateDistanceTutorial()
+{
+	auto& step = tutorialSteps_[currentStep_];
+
+	if (Input::GetInstance()->TriggerKey(DIK_UP) ||
+		Input::GetInstance()->TriggerKey(DIK_DOWN))
+	{
+		step.currentCount++;
+	}
+
+	tutorialUI_->SetGauge(step.currentCount, step.targetCount);
+
+	if (step.currentCount >= step.targetCount)
+	{
+		step.completed = true;
+		currentStep_++;
 	}
 }
 
 void TutorialScene::UpdateGoalTutorial()
 {
+	auto& step = tutorialSteps_[currentStep_];
+
 	CheckClear();
 
-	if (cleared_)
-	{
-		tutorialState_ = TutorialState::Clear;
+	tutorialUI_->SetGauge(step.currentCount, step.targetCount);
+
+	if (step.currentCount >= step.targetCount) {
+		if (cleared_)
+		{
+			tutorialUI_->ShowSuccess();
+
+			step.currentCount = 1;
+			step.completed = true;
+			currentStep_++;
+		}
 	}
+}
+
+void TutorialScene::UpdateClearTutorial()
+{
+	auto& step = tutorialSteps_[currentStep_];
+
+	tutorialUI_->SetGauge(step.currentCount, step.targetCount);
 }
 
 //cubeCsvData_ をキューブの先端配置として適用する

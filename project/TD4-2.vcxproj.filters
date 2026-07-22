@@ -24,6 +24,7 @@
     <ClCompile Include="StageLoader.cpp" />
     <ClCompile Include="StageBuilder.cpp" />
     <ClCompile Include="application\scene\Tutorial\TutorialScene.cpp" />
+    <ClCompile Include="TutorialUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
@@ -55,6 +56,7 @@
     <ClInclude Include="application\WallData.h" />
     <ClInclude Include="StageBuilder.h" />
     <ClInclude Include="application\scene\Tutorial\TutorialScene.h" />
+    <ClInclude Include="TutorialUI.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="application">

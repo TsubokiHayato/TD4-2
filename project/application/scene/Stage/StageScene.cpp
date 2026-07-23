@@ -521,10 +521,8 @@ void StageScene::CheckClear() {
 		clearEffect_ = std::make_unique<ClearEffect>();
 		clearEffect_->Initialize();
 
-		// クリア音。最終面は次の CLEAR 画面が fanfare を鳴らすので、二重を避けて
-		// 軽い確定音に。通常のステージクリアはファンファーレで祝う。
-		AudioManager::GetInstance()->PlaySe(
-			(clearTargetScene_ == CLEAR) ? "decide.mp3" : "fanfare.wav");
+		// クリア音は軽い確定音のみ(ファンファーレは鳴らさない)。
+		AudioManager::GetInstance()->PlaySe("decide.mp3");
 
 		// すぐ切り替えず、演出を見せる「余韻」を持たせる。
 		// 余韻が終わってから Update 側でフェードアウト→遷移する。

@@ -451,8 +451,10 @@ void StageScene::CheckClear() {
 		if (stageIndex_ >= 1 && stageIndex_ <= kStageCount)
 			stageCleared_[stageIndex_ - 1] = true;
 
-		// 9ステージすべてクリアしていれば祝福の CLEAR シーンへ。
-		// まだ残りがあれば、ステージセレクトへ戻る(1ステージごとにセレクトへ)。
+		// 最終ステージ(9番)をクリアしたら祝福の CLEAR シーンへ進む。
+		// (Select は任意順で選べてロックも無いため、全フラグ一致を待つと
+		//  最後に9番を揃えても他が未クリアだと CLEAR へ行けない。最終面の
+		//  クリアを「進行」の合図とする。順不同で9面すべて揃った場合も同様。)
 		bool allCleared = true;
 		for (int i = 0; i < kStageCount; ++i) {
 			if (!stageCleared_[i]) {
@@ -461,8 +463,8 @@ void StageScene::CheckClear() {
 			}
 		}
 
-		if (allCleared) {
-			// 全クリア到達。次の周回を新品にするため記録をリセットしてから祝福画面へ。
+		if (stageIndex_ >= kStageCount || allCleared) {
+			// 祝福画面へ。次の周回を新品にするため記録をリセットしてから遷移。
 			for (int i = 0; i < kStageCount; ++i)
 				stageCleared_[i] = false;
 			SceneManager::GetInstance()->ChangeScene(CLEAR);

@@ -676,11 +676,14 @@ void StageScene::MouseCubeControl() {
 	ImVec2 sc = project(center);
 
 	// 「回転軸×向き」の各候補で、実際にエンジンが回したときブロックが画面上で
-	// どちらへ動くかをシミュレートし、ドラッグ方向に最も一致する候補を選ぶ。
-	// これによりカメラの向き・掴んだ面に関係なく見た目通りに回る。
+	// どちらへ動くかをシミュレートし、ドラッグ方向との一致度(cos)で判定する。
+	// カメラの向き・掴んだ面に関係なく見た目通りに回る。
 	const float kEps = 0.15f;
-	int rotAxis = cand[0], dir = 0;
-	float best = -1e30f;
+	float dragLen = std::sqrt(dragAccumX_ * dragAccumX_ + dragAccumY_ * dragAccumY_);
+
+	// 候補軸(2つ)ごとに、向き2種のうち最も一致する cos とその向きを持つ
+	float bestCosByAxis[2] = {-1e30f, -1e30f};
+	int   bestDirByAxis[2] = {0, 0};
 	for (int ci = 0; ci < 2; ci++) {
 		int axis = cand[ci];
 		for (int d = 0; d < 2; d++) {
@@ -689,14 +692,35 @@ void StageScene::MouseCubeControl() {
 			Vector3 moved = RotateAroundAxisLocal(center, axis, kEps * engineSign);
 			ImVec2 sm = project(moved);
 			ImVec2 dirScreen = {sm.x - sc.x, sm.y - sc.y};
-			float score = dragAccumX_ * dirScreen.x + dragAccumY_ * dirScreen.y;
-			if (score > best) {
-				best = score;
-				rotAxis = axis;
-				dir = d;
+			float dsLen = std::sqrt(dirScreen.x * dirScreen.x + dirScreen.y * dirScreen.y);
+			if (dsLen < 1e-4f || dragLen < 1e-4f)
+				continue;
+			float cosv = (dragAccumX_ * dirScreen.x + dragAccumY_ * dirScreen.y) / (dragLen * dsLen);
+			if (cosv > bestCosByAxis[ci]) {
+				bestCosByAxis[ci] = cosv;
+				bestDirByAxis[ci] = d;
 			}
 		}
 	}
+
+	// 勝ち軸と負け軸(もう一方の軸の最良一致)
+	int winCi = (bestCosByAxis[0] >= bestCosByAxis[1]) ? 0 : 1;
+	float winCos = bestCosByAxis[winCi];
+	float loseCos = bestCosByAxis[1 - winCi];
+
+	// --- 誤発防止(デッドゾーン) ---
+	// (1) どの回転方向にもはっきり沿っていない曖昧なドラッグは回さない。
+	// (2) 2つの回転軸のスコアが近すぎる(ほぼ斜めのドラッグ)ときも回さない。
+	// いずれも「回さずに待つ」だけ。掴みは維持したままなので、ドラッグを
+	// はっきり一方向へ続ければそのまま回る。これで意図しない回転を防ぐ。
+	const float kMinAlign  = 0.5f;   // 最低限の一致度(約60度以内)
+	const float kAxisMargin = 0.15f; // 勝ち軸が負け軸をこれだけ上回ること
+	if (winCos < kMinAlign || (winCos - loseCos) < kAxisMargin) {
+		return; // 曖昧 → 誤発させない(掴みは維持して待つ)
+	}
+
+	int rotAxis = cand[winCi];
+	int dir = bestDirByAxis[winCi];
 	int layer = dragPickCell_[rotAxis];
 
 	// world層 → RubikCube の row_ に変換 (GetRowSign: X=+1, Y/Z=-1)

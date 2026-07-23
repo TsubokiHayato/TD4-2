@@ -26,6 +26,7 @@
     <ClCompile Include="application\scene\Tutorial\TutorialScene.cpp" />
     <ClCompile Include="TutorialUI.cpp" />
     <ClCompile Include="application\scene\Select\StageSelectScene.cpp" />
+    <ClCompile Include="FadeScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
@@ -59,6 +60,7 @@
     <ClInclude Include="application\scene\Tutorial\TutorialScene.h" />
     <ClInclude Include="TutorialUI.h" />
     <ClInclude Include="application\scene\Select\StageSelectScene.h" />
+    <ClInclude Include="FadeScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="application">

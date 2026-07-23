@@ -29,3 +29,7 @@ void ClearEffect::Initialize() {
 		name = e->GetName(); // 片付け用に名前を覚えておく
 	}
 }
+
+void ClearEffect::Finalize() {
+	TuboEngine::ParticleManager::GetInstance()->Remove(name);
+}

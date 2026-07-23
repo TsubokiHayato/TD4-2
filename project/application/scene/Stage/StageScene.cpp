@@ -3,6 +3,7 @@
 #include "SceneManager.h" // シーン遷移を使うとき用
 #include "TextManager.h"
 #include "audio/AudioManager.h" // BGM / SE(仮)
+#include "ParticleManager.h"    // クリア演出のパーティクル駆動
 
 #include <CubeMapConverter.h>
 #include <ImGuiManager.h>
@@ -85,8 +86,8 @@ void StageScene::Update() {
 		CameraRotation();
 	}
 
-	// マウスドラッグでキューブの面を回す
-	if (!ui_->ShouldHideGameplay()) {
+	// マウスドラッグでキューブの面を回す(クリア後の余韻中は触れないよう止める)
+	if (!ui_->ShouldHideGameplay() && !cleared_) {
 		MouseCubeControl();
 	}
 
@@ -160,6 +161,18 @@ void StageScene::Update() {
 	// TextManagerの更新
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 
+	// クリア演出のパーティクルを進める。
+	ParticleManager::GetInstance()->Update(1.0f / 60.0f, camera_.get());
+
+	// クリア後の余韻: 演出を少し見せてからフェードアウトを開始する。
+	if (clearLinger_ > 0.0f) {
+		clearLinger_ -= 1.0f;
+		if (clearLinger_ <= 0.0f && pendingScene_ < 0) {
+			pendingScene_ = clearTargetScene_;
+			fadeScreen_->FadeOut();
+		}
+	}
+
 	fadeScreen_->Update();
 	// フェードアウトが真っ黒まで進んだら、予約したシーンへ実際に切り替える。
 	if (pendingScene_ >= 0 && fadeScreen_->IsFadeOuting()) {
@@ -169,7 +182,13 @@ void StageScene::Update() {
 	//別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(CLEAR);   // 次フレームで切り替わる
 }
 
-void StageScene::Finalize() {}
+void StageScene::Finalize() {
+	// クリア演出のパーティクルを次シーンへ持ち越さないよう片付ける。
+	if (clearEffect_) {
+		clearEffect_->Finalize();
+		clearEffect_.reset();
+	}
+}
 
 void StageScene::Object3DDraw() {
 
@@ -242,7 +261,10 @@ void StageScene::ImGuiDraw() {
 	TuboEngine::TextManager::GetInstance()->DrawImGui();
 #endif
 } // TODO: ImGui描画
-void StageScene::ParticleDraw() {} // TODO: パーティクル描画
+void StageScene::ParticleDraw() {
+	// クリア演出のパーティクル描画。
+	ParticleManager::GetInstance()->Draw();
+} // TODO: パーティクル描画
 // キューブの回転アニメーション
 void StageScene::CubeAnimation() {
 
@@ -470,9 +492,6 @@ void StageScene::CheckClear() {
 
 	if (StageClear::IsClear(rubikCube_->GetState(), required_)) {
 		cleared_ = true;
-		// ステージクリアSE(仮)。最終面は次の CLEAR 画面が fanfare を鳴らすので、
-		// ここは二重にならないよう軽い確定音にしておく。
-		AudioManager::GetInstance()->PlaySe("decide.mp3");
 		// このステージをクリア済みとして記録(static なのでシーンをまたいで保持)。
 		if (stageIndex_ >= 1 && stageIndex_ <= kStageCount)
 			stageCleared_[stageIndex_ - 1] = true;
@@ -490,14 +509,26 @@ void StageScene::CheckClear() {
 		}
 
 		if (stageIndex_ >= kStageCount || allCleared) {
-			// 祝福画面へ。次の周回を新品にするため記録をリセットしてから遷移予約。
+			// 祝福画面へ。次の周回を新品にするため記録をリセット。
 			for (int i = 0; i < kStageCount; ++i)
 				stageCleared_[i] = false;
-			pendingScene_ = CLEAR;
+			clearTargetScene_ = CLEAR;
 		} else {
-			pendingScene_ = SELECT;
+			clearTargetScene_ = SELECT;
 		}
-		fadeScreen_->FadeOut(); // フェードアウト開始(実際の切り替えは Update で)
+
+		// クリア演出(おおさきシーンの ClearEffect のパーティクル)を出す。
+		clearEffect_ = std::make_unique<ClearEffect>();
+		clearEffect_->Initialize();
+
+		// クリア音。最終面は次の CLEAR 画面が fanfare を鳴らすので、二重を避けて
+		// 軽い確定音に。通常のステージクリアはファンファーレで祝う。
+		AudioManager::GetInstance()->PlaySe(
+			(clearTargetScene_ == CLEAR) ? "decide.mp3" : "fanfare.wav");
+
+		// すぐ切り替えず、演出を見せる「余韻」を持たせる。
+		// 余韻が終わってから Update 側でフェードアウト→遷移する。
+		clearLinger_ = 110.0f; // 約1.8秒
 	}
 }
 

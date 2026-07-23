@@ -13,6 +13,7 @@
 #include <string>
 
 #include "FadeScreen.h"
+#include "ClearEffect.h" // クリア時のパーティクル演出(おおさきシーン由来)
 
 // ゲーム本編（ステージ）
 // ここに自分の処理を足していく（カメラだけ持った最小の雛形）。
@@ -89,6 +90,11 @@ private:
 	std::string cubeStagePath_ = "Resources/4209_stages/cube1.csv";  // キューブCSVのパス
 	int stageIndex_ = 1;                                             // 現在のステージ番号
 	int pendingScene_ = -1;                                          // フェードアウト完了後に切り替える先(-1=無し)
+
+	// --- クリア演出＋余韻 ---
+	std::unique_ptr<ClearEffect> clearEffect_;                       // クリア時のパーティクル演出
+	float clearLinger_ = -1.0f;                                      // クリア後、遷移までの余韻フレーム(-1=非アクティブ)
+	int clearTargetScene_ = -1;                                      // 余韻後に切り替える先(SELECT / CLEAR)
 	static constexpr int kStageCount = 9;                            // 用意されているステージ数(セレクトの3x3=9に合わせる)
 	int editStageNo_ = 1;                                            // レベルエディターで編集対象に読み込むステージ番号
 	static bool stageCleared_[kStageCount];                         // 各ステージのクリア済みフラグ(全クリア判定用・シーンをまたいで保持)

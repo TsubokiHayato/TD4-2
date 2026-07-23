@@ -1,9 +1,9 @@
 #include "StageSelectScene.h"
 #include "GameScenes.h"
-#include "SceneManager.h" // シーン遷移を使うとき用
-#include "TextManager.h"
-#include "Stage/StageScene.h"
 #include "Input.h"
+#include "SceneManager.h" // シーン遷移を使うとき用
+#include "Stage/StageScene.h"
+#include "TextManager.h"
 #include "audio/AudioManager.h" // SE(仮)
 #ifdef USE_IMGUI
 #include "externals/imgui/imgui.h"
@@ -15,9 +15,9 @@ using namespace TuboEngine;
 void StageSelectScene::Initialize() {
 	// 最低限のカメラ
 	camera_ = std::make_unique<TuboEngine::Camera>();
-	camera_->SetTranslate({ 0.0f, 0.0f, -15.0f });
-	camera_->setRotation({ 0.0f, 0.0f, 0.0f });
-	camera_->setScale({ 1.0f, 1.0f, 1.0f });
+	camera_->SetTranslate({0.0f, 0.0f, -15.0f});
+	camera_->setRotation({0.0f, 0.0f, 0.0f});
+	camera_->setScale({1.0f, 1.0f, 1.0f});
 	camera_->Update();
 	// デバッグカメラ
 	debugCamera_ = std::make_unique<DebugCamera>();
@@ -28,19 +28,19 @@ void StageSelectScene::Initialize() {
 	// ImGui の TextManager パネルで位置や色を調整でき、Save で書き戻せる。
 	tm->LoadTextLayout("Resources/Text/Select.json");
 
-	//ステージ
-	// 3x3のブロックを並べる
+	// ステージ
+	//  3x3のブロックを並べる
 	for (int y = 0; y < kGridSize; ++y) {
 		for (int x = 0; x < kGridSize; ++x) {
 			auto block = std::make_unique<TuboEngine::Object3d>();
 			block->Initialize("block/block.obj");
 			block->SetCamera(camera_.get());
-			block->SetScale({ kBlockScale, kBlockScale, kBlockScale });
+			block->SetScale({kBlockScale, kBlockScale, kBlockScale});
 
 			// 中央揃えで3x3に配置
 			float posX = (static_cast<float>(x) - (kGridSize - 1) * 0.5f) * kBlockSpacing;
 			float posY = -(static_cast<float>(y) - (kGridSize - 1) * 0.5f) * kBlockSpacing;
-			block->SetPosition({ posX, posY, 0.0f });
+			block->SetPosition({posX, posY, 0.0f});
 
 			blocks_[ToIndex(x, y)] = std::move(block);
 		}
@@ -52,20 +52,20 @@ void StageSelectScene::Initialize() {
 	fadeScreen_ = std::make_unique<FadeScreen>();
 	fadeScreen_->Initialize();
 }
-//更新
+// 更新
 void StageSelectScene::Update() {
-	//カメラ更新
+	// カメラ更新
 	camera_->Update();
 	debugCamera_->Update(camera_.get());
-	//セレクトブロック
+	// セレクトブロック
 	for (auto& block : blocks_) {
 		block->Update();
 	}
-	//選択ブロックの切り替え
+	// 選択ブロックの切り替え
 	UpdateSelection();
-	//選択中のブロックアニメーション
+	// 選択中のブロックアニメーション
 	UpdateBlockAppearance();
-	//ステージ決定
+	// ステージ決定
 	ConfirmSelection();
 	// テキストの更新
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
@@ -81,30 +81,31 @@ void StageSelectScene::Finalize() {
 }
 
 void StageSelectScene::Object3DDraw() {
-	//セレクトブロック
+	// セレクトブロック
 	for (auto& block : blocks_) {
 		block->Draw();
 	}
-	
+
 } // TODO: 3Dオブジェクト描画
-void StageSelectScene::SpriteDraw() { 
+void StageSelectScene::SpriteDraw() {
 	TuboEngine::TextManager::GetInstance()->DrawAll();
 	fadeScreen_->Draw();
 
-}   // TODO: 2Dスプライト描画
+} // TODO: 2Dスプライト描画
 
 void StageSelectScene::ImGuiDraw() {
+#ifdef USE_IMGUI
 	ImGui::Begin("Stage Select");
-	ImGui::Text("Selected : (%d, %d)  Index: %d / %d",
-		selectedX_, selectedY_, ToIndex(selectedX_, selectedY_) + 1, kStageCount);
+	ImGui::Text("Selected : (%d, %d)  Index: %d / %d", selectedX_, selectedY_, ToIndex(selectedX_, selectedY_) + 1, kStageCount);
 	ImGui::Text("[Arrow Keys] : move  [SPACE] : decide");
 	ImGui::End();
 
 	TuboEngine::TextManager::GetInstance()->DrawImGui();
+#endif
 }
 void StageSelectScene::ParticleDraw() {} // TODO: パーティクル描画
 
-//選択ブロックの切り替え
+// 選択ブロックの切り替え
 void StageSelectScene::UpdateSelection() {
 	Input* input = Input::GetInstance();
 	// フェードアウト中(決定後)はカーソル操作を止める
@@ -132,18 +133,18 @@ void StageSelectScene::UpdateSelection() {
 		AudioManager::GetInstance()->PlaySe("cursor_move.mp3"); // カーソル移動音(仮)
 }
 
-//選択中のブロックアニメーション
+// 選択中のブロックアニメーション
 void StageSelectScene::UpdateBlockAppearance() {
 	// 選択中のブロックの拡縮
 	for (int y = 0; y < kGridSize; ++y) {
 		for (int x = 0; x < kGridSize; ++x) {
 			bool isSelected = (x == selectedX_ && y == selectedY_);
 			float scale = isSelected ? kBlockScale * 1.3f : kBlockScale;
-			blocks_[ToIndex(x, y)]->SetScale({ scale, scale, scale });
+			blocks_[ToIndex(x, y)]->SetScale({scale, scale, scale});
 		}
 	}
 }
-//ステージ決定
+// ステージ決定
 void StageSelectScene::ConfirmSelection() {
 	Input* input = Input::GetInstance();
 
@@ -151,8 +152,9 @@ void StageSelectScene::ConfirmSelection() {
 		if (!isSelecting_)
 			AudioManager::GetInstance()->PlaySe("decide.mp3"); // 決定音(仮・押した瞬間だけ)
 		isSelecting_ = true;
-		fadeScreen_->FadeOut();//フェードアウト開始
-		if (!fadeScreen_->IsFadeOuting()) return;//フェードアウトが終わるまで待機
+		fadeScreen_->FadeOut(); // フェードアウト開始
+		if (!fadeScreen_->IsFadeOuting())
+			return; // フェードアウトが終わるまで待機
 		int index = ToIndex(selectedX_, selectedY_);
 		StageScene::SetSelectedStageIndex(index + 1);
 		SceneManager::GetInstance()->ChangeScene(STAGE);

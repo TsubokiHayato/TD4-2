@@ -90,6 +90,8 @@ void SatouScene::ImGuiDraw() {
 	// デバッグカメラ用UIの描画
 	debugCamera_->DrawImGui();
 
+	#ifdef USE_IMGUI
+
 	// --- ステージ構造の可視化とエディタ ---
 	ImGui::Begin("Stage Map");
 	ImGui::PushItemWidth(100);
@@ -295,6 +297,8 @@ void SatouScene::ImGuiDraw() {
 	ImGui::Checkbox("Transparent Walls", &isTransparent_);
 	ImGui::SliderFloat("Wall Alpha", &alpha_, 0.0f, 1.0f);
 	ImGui::End();
+
+	#endif
 }    // TODO: ImGui描画
 void SatouScene::ParticleDraw() {}    // TODO: パーティクル描画
 

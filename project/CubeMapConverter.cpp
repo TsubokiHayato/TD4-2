@@ -65,6 +65,7 @@ std::vector<HoleData> CubeMapConverter::Convert(
 
 void CubeMapConverter::DrawFaceDebug(const std::vector<HoleData>& holes, FaceType face, int cubeSize)
 {
+#ifdef USE_IMGUI
 	if (ImGui::TreeNode("Face")) {
 
 		for (int y = 0; y < cubeSize; y++) {
@@ -89,6 +90,9 @@ void CubeMapConverter::DrawFaceDebug(const std::vector<HoleData>& holes, FaceTyp
 
 		ImGui::TreePop();
 	}
+#else
+	(void)holes; (void)face; (void)cubeSize;
+#endif
 }
 
 FaceType CubeMapConverter::GetFace(int x, int y) const

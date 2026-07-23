@@ -187,9 +187,11 @@ void TutorialScene::Update() {
 
 	wallAlpha_ = isTransparent_ ? alpha_ : 1.0f;
 
+	color_.w = wallAlpha_;
+
 	// 各セル(壁・コーン・四角)のトランスフォーム等の更新
 	for (auto& wall : wallObjects_) {
-		wall->SetModelColor({ 1,1,1,wallAlpha_ });
+		wall->SetModelColor(color_);
 	}
 
 	UpdateTutorial();

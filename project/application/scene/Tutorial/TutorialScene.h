@@ -137,6 +137,7 @@ private:
 	static constexpr int kStageCount = 9; // 用意されているステージ数(セレクトの3x3=9に合わせる)
 	int editStageNo_ = 1; // レベルエディターで編集対象に読み込むステージ番号	
 	static bool stageCleared_[kStageCount]; // 各ステージのクリア済みフラグ(全クリア判定用・シーンをまたいで保持)
+	Vector4 color_ = { 0.4f, 1.0f, 1.0f, 0.0f }; // 壁の色(RGBA)
 
 	// --- マウスによるキューブ回転(3Dピッキング) ---
 	bool dragging_ = false;      // 左ドラッグ中か
@@ -161,7 +162,7 @@ private:
 	// 壁グリッドも間隔1(cellSize=1)に合わせる。
 	float stageCellSize_ = 1.0f;   // グリッド間隔
 	float wallThickness_ = 3.0f;   // 壁の押し出し距離(surfaceOffset に加算)
-	float cubeMargin_ = 0.0f;      // キューブと壁の追加距離
+	float cubeMargin_ = 3.0f;      // キューブと壁の追加距離
 	// 壁/穴モデルは実寸2ユニット。タイル同士が重ならないよう cellSize より
 	// 小さめの見た目にする(=一定間隔あく)。グリッド間隔(cellSize)とは分離。
 	float wallScale_ = 0.5f;       // タイルの見た目サイズ

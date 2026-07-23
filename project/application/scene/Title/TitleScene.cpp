@@ -236,7 +236,7 @@ void TitleScene::DecideSelection() {
 	switch (selected_) {
 	case kMenuStart:
 		AudioManager::GetInstance()->PlayBgm("game.wav"); // ゲーム BGM へ切替
-		SceneManager::GetInstance()->ChangeScene(STAGE);  // 次フレームでゲーム本編へ
+		SceneManager::GetInstance()->ChangeScene(SELECT); // まずステージセレクトへ(ここがハブ)
 		break;
 	case kMenuOption:
 		SceneManager::GetInstance()->ChangeScene(OPTION); // 設定画面へ

@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Object3d.h"
 #include  "Ui.h"
+#include "TutorialUI.h"
 
 #include "rubikCube/RubikCube.h"
 #include "stageClear/StageClear.h"
@@ -12,11 +13,9 @@
 #include <vector>
 #include <string>
 
-#include "FadeScreen.h"
-
 // ゲーム本編（ステージ）
 // ここに自分の処理を足していく（カメラだけ持った最小の雛形）。
-class StageScene : public IScene {
+class TutorialScene : public IScene {
 public:
 	void Initialize() override;
 	void Update() override;
@@ -61,13 +60,56 @@ public:
 	//指定番号のステージ(壁+キューブCSV)を読み込む
 	void LoadStage(int index);
 
-	static void SetSelectedStageIndex(int index) { pendingStageIndex_ = index; }
+	void CubeMarginChange();
+
+	// チュートリアルステップ
+	enum class TutorialState {
+		CameraMove,    // WASDでカメラ回転
+		CameraZoom,    // QEでズーム
+		CubeRotate,    // ドラッグでキューブ回転
+		Transparent,   // Tで壁を透明化
+		Distance,      // 壁の距離を調整
+		Goal,          // ゴールへ
+		Clear
+	};
+
+	struct TutorialStep
+	{
+		TutorialState action;;
+
+		TutorialUI::GuideType guide;
+
+		int targetCount;
+
+		int currentCount;
+
+		bool completed;
+	};
+
+	
+	std::vector<TutorialStep> tutorialSteps_;
+	int currentStep_ = 0;
+
+	void UpdateTutorial();
+
+	void UpdateCameraMoveTutorial();
+
+	void UpdateZoomTutorial();
+
+	void UpdateCubeRotateTutorial();
+
+	void UpdateTransparentTutorial();
+
+	void UpdateDistanceTutorial();
+
+	void UpdateGoalTutorial();
+
+	void UpdateClearTutorial();
 
 private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
 	std::unique_ptr<TuboEngine::Object3d>pauseMenuCube_;//ポーズメニューキューブ
 	std::unique_ptr<Ui>ui_;//UIクラス
-	std::unique_ptr<TuboEngine::Object3d> background;
 
 	// --- パズル本体 ---
 	std::unique_ptr<RubikCube> rubikCube_;                            // 先端つきキューブ(他者作成、getterのみ利用)
@@ -77,18 +119,16 @@ private:
 	std::vector<WallData> wallData_;                                  // 壁配置情報(StageBuilder由来)
 	SixCube required_{};                                              // 先端が必要な位置
 	bool cleared_ = false;                                            // クリア済みフラグ
-	bool editorEnabled_ = false;                                      // true でクリア判定を止めて編集に集中(通常プレイは false)
+	bool editorEnabled_ = true;                                       // クリア判定を止めて編集に集中
 	bool rebuildRequested_ = false;                                   // 次フレームで壁を作り直す(描画中の破棄回避)
 	bool applyCubeState_ = false;                                     // 次フレームでキューブ先端をCSVから再適用
 	SixCube prevCubeState_{};                                         // 前フレームのキューブ状態(操作検知用)
 	bool prevCubeStateValid_ = false;                                 // prevCubeState_ が有効か
 	int moveCount_ = 0;                                               // キューブ状態が変化した回数(操作が効いた回数)
-	std::string stagePath_ = "Resources/4209_stages/stage1.csv";     // 壁CSVのパス
-	std::string cubeStagePath_ = "Resources/4209_stages/cube1.csv";  // キューブCSVのパス
+	std::string stagePath_ = "Resources/4209_stages/tutorialStage.csv";     // 壁CSVのパス
+	std::string cubeStagePath_ = "Resources/4209_stages/tutorialCube.csv";  // キューブCSVのパス
 	int stageIndex_ = 1;                                             // 現在のステージ番号
-	static constexpr int kStageCount = 9;                            // 用意されているステージ数(セレクトの3x3=9に合わせる)
-	int editStageNo_ = 1;                                            // レベルエディターで編集対象に読み込むステージ番号
-	static bool stageCleared_[kStageCount];                         // 各ステージのクリア済みフラグ(全クリア判定用・シーンをまたいで保持)
+	static constexpr int kStageCount = 2;                            // 用意されているステージ数
 
 	// --- マウスによるキューブ回転(3Dピッキング) ---
 	bool dragging_ = false;      // 左ドラッグ中か
@@ -124,15 +164,19 @@ private:
 	float yaw_ = 0.0f;                                       // 左右
 	float pitch_ = 0.0f;                                     // 上下
 
-	static int pendingStageIndex_; //セレクトシーンで選ばれたステージ番号
-
 	const float PI = 3.1415926f;
 	const float DEG90 = PI / 2.0f;
 
-	float cubeBaseScale_ = 3.5f;
+	float cubeBaseScale_ = 1.5f;
 	float cubeScale_ = 0.0f;
 	float basecubeAngle_ = 0.0f;
 	bool prevRotating_ = false;
 
-	std::unique_ptr<FadeScreen> fadeScreen_ = nullptr;
+	
+	std::unique_ptr<TutorialUI> tutorialUI_;
+
+	// 壁の透明化フラグ
+	bool isTransparent_ = false;
+	float wallAlpha_;
+	float alpha_ = 0.2f;
 };

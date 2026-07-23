@@ -20,6 +20,7 @@
 using namespace TuboEngine;
 
 int StageScene::pendingStageIndex_ = -1;
+bool StageScene::stageCleared_[StageScene::kStageCount] = {};
 
 void StageScene::Initialize() {
 	// オービットカメラ(SatouScene移植: A/D回転 W/S上下 Q/Eズーム)
@@ -197,7 +198,6 @@ void StageScene::ImGuiDraw() {
 		rebuildRequested_ = true; // 実際の再構築は次フレーム冒頭
 	}
 	ImGui::End();
-
 	// カメラ調整(A/D=回転 W/S=上下 Q/E=ズーム)
 	ImGui::Begin("Camera");
 	ImGui::Text("A/D: rotate  W/S: up-down  Q/E: zoom");
@@ -399,12 +399,34 @@ void StageScene::CheckClear() {
 	if (cleared_ || editorEnabled_)
 		return;
 
+	// 入場直後の「最初から揃っている」配置で一瞬だけ遷移するのを防ぐ。
+	// 最低1回はキューブを動かす(状態が変化する)までクリア扱いにしない。
+	if (moveCount_ <= 0)
+		return;
+
 	if (StageClear::IsClear(rubikCube_->GetState(), required_)) {
-		// 最終ステージをクリアしたら CLEAR シーンへ。
-		// それ以外は自動遷移せず、HUD の「Next Stage」で次へ進む。
-		if (stageIndex_ >= kStageCount) {
-			cleared_ = true;
+		cleared_ = true;
+		// このステージをクリア済みとして記録(static なのでシーンをまたいで保持)。
+		if (stageIndex_ >= 1 && stageIndex_ <= kStageCount)
+			stageCleared_[stageIndex_ - 1] = true;
+
+		// 9ステージすべてクリアしていれば祝福の CLEAR シーンへ。
+		// まだ残りがあれば、ステージセレクトへ戻る(1ステージごとにセレクトへ)。
+		bool allCleared = true;
+		for (int i = 0; i < kStageCount; ++i) {
+			if (!stageCleared_[i]) {
+				allCleared = false;
+				break;
+			}
+		}
+
+		if (allCleared) {
+			// 全クリア到達。次の周回を新品にするため記録をリセットしてから祝福画面へ。
+			for (int i = 0; i < kStageCount; ++i)
+				stageCleared_[i] = false;
 			SceneManager::GetInstance()->ChangeScene(CLEAR);
+		} else {
+			SceneManager::GetInstance()->ChangeScene(SELECT);
 		}
 	}
 }
@@ -781,7 +803,23 @@ void StageScene::DrawEditor() {
 
 	ImGui::Checkbox("Editor Mode (stop clear transition)", &editorEnabled_);
 	ImGui::TextWrapped("Click a cell to cycle: Empty -> Wall -> Cone -> Square");
-	ImGui::Text("File: %s", stagePath_.c_str());
+
+	// --- 編集するステージ番号を選んで読み込む(1〜9のどれでも編集できる) ---
+	ImGui::Separator();
+	ImGui::SetNextItemWidth(120.0f);
+	ImGui::InputInt("Stage # to edit", &editStageNo_);
+	editStageNo_ = std::clamp(editStageNo_, 1, kStageCount);
+	ImGui::SameLine();
+	if (ImGui::Button("Load this stage")) {
+		// 壁＋キューブCSVをまとめて読み込み、編集対象を切り替える。
+		// (LoadStage が stagePath_/cubeStagePath_ を更新するので Save もこの番号に書ける)
+		editorEnabled_ = true; // 編集中はクリア遷移を止める
+		LoadStage(editStageNo_);
+	}
+	ImGui::Text("Now editing stage: %d / %d", stageIndex_, kStageCount);
+	ImGui::Separator();
+
+	ImGui::Text("Wall File: %s", stagePath_.c_str());
 
 	if (ImGui::Button("Save CSV")) {
 		SaveStage();

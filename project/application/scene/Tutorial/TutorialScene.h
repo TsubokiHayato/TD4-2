@@ -13,6 +13,8 @@
 #include <vector>
 #include <string>
 
+#include "FadeScreen.h"
+
 // ゲーム本編（ステージ）
 // ここに自分の処理を足していく（カメラだけ持った最小の雛形）。
 class TutorialScene : public IScene {
@@ -59,6 +61,8 @@ public:
 	void ApplyCubeCsv();
 	//指定番号のステージ(壁+キューブCSV)を読み込む
 	void LoadStage(int index);
+
+	static void SetSelectedStageIndex(int index) { pendingStageIndex_ = index; }
 
 	void CubeMarginChange();
 
@@ -110,6 +114,7 @@ private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
 	std::unique_ptr<TuboEngine::Object3d>pauseMenuCube_;//ポーズメニューキューブ
 	std::unique_ptr<Ui>ui_;//UIクラス
+	std::unique_ptr<TuboEngine::Object3d> background;
 
 	// --- パズル本体 ---
 	std::unique_ptr<RubikCube> rubikCube_;                            // 先端つきキューブ(他者作成、getterのみ利用)
@@ -119,7 +124,7 @@ private:
 	std::vector<WallData> wallData_;                                  // 壁配置情報(StageBuilder由来)
 	SixCube required_{};                                              // 先端が必要な位置
 	bool cleared_ = false;                                            // クリア済みフラグ
-	bool editorEnabled_ = true;                                       // クリア判定を止めて編集に集中
+	bool editorEnabled_ = false; // true でクリア判定を止めて編集に集中(通常プレイは false)
 	bool rebuildRequested_ = false;                                   // 次フレームで壁を作り直す(描画中の破棄回避)
 	bool applyCubeState_ = false;                                     // 次フレームでキューブ先端をCSVから再適用
 	SixCube prevCubeState_{};                                         // 前フレームのキューブ状態(操作検知用)
@@ -128,7 +133,9 @@ private:
 	std::string stagePath_ = "Resources/4209_stages/tutorialStage.csv";     // 壁CSVのパス
 	std::string cubeStagePath_ = "Resources/4209_stages/tutorialCube.csv";  // キューブCSVのパス
 	int stageIndex_ = 1;                                             // 現在のステージ番号
-	static constexpr int kStageCount = 2;                            // 用意されているステージ数
+	static constexpr int kStageCount = 9; // 用意されているステージ数(セレクトの3x3=9に合わせる)
+	int editStageNo_ = 1; // レベルエディターで編集対象に読み込むステージ番号	
+	static bool stageCleared_[kStageCount]; // 各ステージのクリア済みフラグ(全クリア判定用・シーンをまたいで保持)
 
 	// --- マウスによるキューブ回転(3Dピッキング) ---
 	bool dragging_ = false;      // 左ドラッグ中か
@@ -164,6 +171,9 @@ private:
 	float yaw_ = 0.0f;                                       // 左右
 	float pitch_ = 0.0f;                                     // 上下
 
+
+	static int pendingStageIndex_; //セレクトシーンで選ばれたステージ番号
+
 	const float PI = 3.1415926f;
 	const float DEG90 = PI / 2.0f;
 
@@ -171,6 +181,9 @@ private:
 	float cubeScale_ = 0.0f;
 	float basecubeAngle_ = 0.0f;
 	bool prevRotating_ = false;
+
+
+	std::unique_ptr<FadeScreen> fadeScreen_ = nullptr;
 
 	
 	std::unique_ptr<TutorialUI> tutorialUI_;

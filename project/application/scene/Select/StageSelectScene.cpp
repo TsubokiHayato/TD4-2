@@ -4,6 +4,7 @@
 #include "TextManager.h"
 #include "Stage/StageScene.h"
 #include "Input.h"
+#include "audio/AudioManager.h" // SE(仮)
 #ifdef USE_IMGUI
 #include "externals/imgui/imgui.h"
 #endif
@@ -106,19 +107,29 @@ void StageSelectScene::ParticleDraw() {} // TODO: パーティクル描画
 //選択ブロックの切り替え
 void StageSelectScene::UpdateSelection() {
 	Input* input = Input::GetInstance();
+	// フェードアウト中(決定後)はカーソル操作を止める
+	if (isSelecting_)
+		return;
+	bool moved = false;
 	// 矢印キー または WASD で選択ブロックを切り替える
 	if (input->TriggerKey(DIK_RIGHT) || input->TriggerKey(DIK_D)) {
 		selectedX_ = (selectedX_ + 1) % kGridSize;
+		moved = true;
 	}
 	if (input->TriggerKey(DIK_LEFT) || input->TriggerKey(DIK_A)) {
 		selectedX_ = (selectedX_ - 1 + kGridSize) % kGridSize;
+		moved = true;
 	}
 	if (input->TriggerKey(DIK_UP) || input->TriggerKey(DIK_W)) {
 		selectedY_ = (selectedY_ - 1 + kGridSize) % kGridSize;
+		moved = true;
 	}
 	if (input->TriggerKey(DIK_DOWN) || input->TriggerKey(DIK_S)) {
 		selectedY_ = (selectedY_ + 1) % kGridSize;
+		moved = true;
 	}
+	if (moved)
+		AudioManager::GetInstance()->PlaySe("cursor_move.mp3"); // カーソル移動音(仮)
 }
 
 //選択中のブロックアニメーション
@@ -137,6 +148,8 @@ void StageSelectScene::ConfirmSelection() {
 	Input* input = Input::GetInstance();
 
 	if (input->TriggerKey(DIK_RETURN) || input->TriggerKey(DIK_SPACE) || isSelecting_) {
+		if (!isSelecting_)
+			AudioManager::GetInstance()->PlaySe("decide.mp3"); // 決定音(仮・押した瞬間だけ)
 		isSelecting_ = true;
 		fadeScreen_->FadeOut();//フェードアウト開始
 		if (!fadeScreen_->IsFadeOuting()) return;//フェードアウトが終わるまで待機

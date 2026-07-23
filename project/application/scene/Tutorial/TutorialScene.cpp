@@ -250,6 +250,10 @@ void TutorialScene::Update() {
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 
 	fadeScreen_->Update();
+	// フェードアウトが真っ黒まで進んだら、予約したシーンへ実際に切り替える。
+	if (pendingScene_ >= 0 && fadeScreen_->IsFadeOuting()) {
+		SceneManager::GetInstance()->ChangeScene(pendingScene_);
+	}
 
 	// 別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(CLEAR);   // 次フレームで切り替わる
 }
@@ -383,18 +387,24 @@ void TutorialScene::CubeAnimation() {
 }
 //ポーズメニューでのシーン切り替え
 void TutorialScene::ChangeSceneFromPause() {
+	if (pendingScene_ >= 0)
+		return; // 既に遷移予約済み(フェードアウト中)なら二重予約しない
+
 	switch (ui_->GetPauseMenu()) {
 	case Ui::PauseMenuType::Retry:
-		SceneManager::GetInstance()->ChangeScene(STAGE);
+		pendingScene_ = STAGE;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	case Ui::PauseMenuType::ToTitle:
-		SceneManager::GetInstance()->ChangeScene(TITLE);
+		pendingScene_ = TITLE;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	case Ui::PauseMenuType::ToSelect:
-		SceneManager::GetInstance()->ChangeScene(SELECT);
+		pendingScene_ = SELECT;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	default:
 		break;
@@ -759,14 +769,15 @@ void TutorialScene::CheckClear() {
 		}
 
 		if (allCleared) {
-			// 全クリア到達。次の周回を新品にするため記録をリセットしてから祝福画面へ。
+			// 全クリア到達。次の周回を新品にするため記録をリセットしてから遷移予約。
 			for (int i = 0; i < kStageCount; ++i)
 				stageCleared_[i] = false;
-			SceneManager::GetInstance()->ChangeScene(CLEAR);
+			pendingScene_ = CLEAR;
 		}
 		else {
-			SceneManager::GetInstance()->ChangeScene(SELECT);
+			pendingScene_ = SELECT;
 		}
+		fadeScreen_->FadeOut(); // フェードアウト開始(実際の切り替えは Update で)
 	}
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "IScene.h"
 #include "Camera.h"
+#include "FadeScreen.h" // シーン遷移フェード
 #include <functional>
 #include <memory>
 #include <string>
@@ -55,4 +56,7 @@ private:
 	TuboEngine::TextObject* cursor_ = nullptr;
 
 	int selected_ = 0;
+
+	std::unique_ptr<FadeScreen> fadeScreen_; // 入場フェードイン＋退場フェードアウト
+	int pendingScene_ = -1;                  // フェードアウト完了後に切り替える先(-1=無し)
 };

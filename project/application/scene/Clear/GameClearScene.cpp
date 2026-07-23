@@ -68,6 +68,10 @@ void GameClearScene::Initialize() {
 	preset.colorEnd = {1.0f, 1.0f, 1.0f, 0.0f}; // 最後にフェードアウト
 	if (IParticleEmitter* e = ParticleManager::GetInstance()->CreateEmitterByType("Default", preset))
 		particleName_ = e->GetName();
+
+	// シーン遷移フェード(入場で黒→クリア、退場で FadeOut)。
+	fadeScreen_ = std::make_unique<FadeScreen>();
+	fadeScreen_->Initialize();
 }
 
 void GameClearScene::Update() {
@@ -113,14 +117,21 @@ void GameClearScene::Update() {
 	ParticleManager::GetInstance()->Update(dt, camera_.get());
 
 	// 表示直後の誤爆を避けるため、0.5秒経ってから決定入力を受け付ける。
-	if (elapsed_ > 0.5f && TakeDecideInput()) {
+	if (pendingScene_ < 0 && elapsed_ > 0.5f && TakeDecideInput()) {
 		AudioManager::GetInstance()->PlaySe("decide.mp3");
-		// タイトル BGM へ戻し、タイトルシーンへ。
+		// タイトル BGM へ戻す。フェードアウト完了後にタイトルシーンへ。
 		AudioManager::GetInstance()->PlayBgm("title.wav");
-		SceneManager::GetInstance()->ChangeScene(TITLE);
+		pendingScene_ = TITLE;
+		fadeScreen_->FadeOut();
 	}
 
 	TextManager::GetInstance()->UpdateAll();
+
+	// フェード進行と、真っ黒になったら実際のシーン切り替え。
+	fadeScreen_->Update();
+	if (pendingScene_ >= 0 && fadeScreen_->IsFadeOuting()) {
+		SceneManager::GetInstance()->ChangeScene(pendingScene_);
+	}
 }
 
 void GameClearScene::Finalize() {
@@ -138,7 +149,10 @@ void GameClearScene::Object3DDraw() {
 	if (rubikCube_)
 		rubikCube_->Draw();
 }
-void GameClearScene::SpriteDraw() { TextManager::GetInstance()->DrawAll(); }
+void GameClearScene::SpriteDraw() {
+	TextManager::GetInstance()->DrawAll();
+	fadeScreen_->Draw();
+}
 void GameClearScene::ImGuiDraw() { TextManager::GetInstance()->DrawImGui(); }
 void GameClearScene::ParticleDraw() { ParticleManager::GetInstance()->Draw(); }
 

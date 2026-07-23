@@ -2,6 +2,7 @@
 #include "GameScenes.h"
 #include "SceneManager.h" // シーン遷移を使うとき用
 #include "TextManager.h"
+#include "audio/AudioManager.h" // BGM / SE(仮)
 
 #include <CubeMapConverter.h>
 #include <ImGuiManager.h>
@@ -61,6 +62,10 @@ void StageScene::Initialize() {
 
 	fadeScreen_ = std::make_unique<FadeScreen>();
 	fadeScreen_->Initialize();
+
+	// ステージ BGM(仮)。同じ曲が既に鳴っていれば PlayBgm は何もしないので、
+	// Title 経由でも Stage 直接起動でも確実にゲーム BGM が鳴る。
+	AudioManager::GetInstance()->PlayBgm("game.wav");
 }
 
 void StageScene::Update() {
@@ -156,6 +161,10 @@ void StageScene::Update() {
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 
 	fadeScreen_->Update();
+	// フェードアウトが真っ黒まで進んだら、予約したシーンへ実際に切り替える。
+	if (pendingScene_ >= 0 && fadeScreen_->IsFadeOuting()) {
+		SceneManager::GetInstance()->ChangeScene(pendingScene_);
+	}
 
 	//別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(CLEAR);   // 次フレームで切り替わる
 }
@@ -262,18 +271,24 @@ void StageScene::CubeAnimation() {
 }
 // ポーズメニューでのシーン切り替え
 void StageScene::ChangeSceneFromPause() {
+	if (pendingScene_ >= 0)
+		return; // 既に遷移予約済み(フェードアウト中)なら二重予約しない
+
 	switch (ui_->GetPauseMenu()) {
-	case Ui::PauseMenuType::Retry:		
-		SceneManager::GetInstance()->ChangeScene(STAGE);
+	case Ui::PauseMenuType::Retry:
+		pendingScene_ = STAGE;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	case Ui::PauseMenuType::ToTitle:
-		SceneManager::GetInstance()->ChangeScene(TITLE);
+		pendingScene_ = TITLE;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	case Ui::PauseMenuType::ToSelect:
-		SceneManager::GetInstance()->ChangeScene(SELECT);
+		pendingScene_ = SELECT;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	default:
 		break;
@@ -447,6 +462,9 @@ void StageScene::CheckClear() {
 
 	if (StageClear::IsClear(rubikCube_->GetState(), required_)) {
 		cleared_ = true;
+		// ステージクリアSE(仮)。最終面は次の CLEAR 画面が fanfare を鳴らすので、
+		// ここは二重にならないよう軽い確定音にしておく。
+		AudioManager::GetInstance()->PlaySe("decide.mp3");
 		// このステージをクリア済みとして記録(static なのでシーンをまたいで保持)。
 		if (stageIndex_ >= 1 && stageIndex_ <= kStageCount)
 			stageCleared_[stageIndex_ - 1] = true;
@@ -464,13 +482,14 @@ void StageScene::CheckClear() {
 		}
 
 		if (stageIndex_ >= kStageCount || allCleared) {
-			// 祝福画面へ。次の周回を新品にするため記録をリセットしてから遷移。
+			// 祝福画面へ。次の周回を新品にするため記録をリセットしてから遷移予約。
 			for (int i = 0; i < kStageCount; ++i)
 				stageCleared_[i] = false;
-			SceneManager::GetInstance()->ChangeScene(CLEAR);
+			pendingScene_ = CLEAR;
 		} else {
-			SceneManager::GetInstance()->ChangeScene(SELECT);
+			pendingScene_ = SELECT;
 		}
+		fadeScreen_->FadeOut(); // フェードアウト開始(実際の切り替えは Update で)
 	}
 }
 
@@ -707,6 +726,7 @@ void StageScene::MouseCubeControl() {
 	// (次の回転はもう一度ブロックを掴み直す)。
 	if (rubikCube_->RequestRotation(rotAxis, row, dir)) {
 		rotateFlash_ = 40.0f;
+		AudioManager::GetInstance()->PlaySe("cursor_move.mp3"); // 回転SE(仮)
 	}
 	dragging_ = false;
 	dragAccumX_ = 0.0f;

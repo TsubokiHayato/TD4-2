@@ -133,6 +133,7 @@ private:
 	std::string stagePath_ = "Resources/4209_stages/tutorialStage.csv";     // 壁CSVのパス
 	std::string cubeStagePath_ = "Resources/4209_stages/tutorialCube.csv";  // キューブCSVのパス
 	int stageIndex_ = 1;                                             // 現在のステージ番号
+	int pendingScene_ = -1;                                          // フェードアウト完了後に切り替える先(-1=無し)
 	static constexpr int kStageCount = 9; // 用意されているステージ数(セレクトの3x3=9に合わせる)
 	int editStageNo_ = 1; // レベルエディターで編集対象に読み込むステージ番号	
 	static bool stageCleared_[kStageCount]; // 各ステージのクリア済みフラグ(全クリア判定用・シーンをまたいで保持)

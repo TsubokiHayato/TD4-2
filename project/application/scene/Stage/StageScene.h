@@ -63,6 +63,8 @@ public:
 
 	static void SetSelectedStageIndex(int index) { pendingStageIndex_ = index; }
 
+	void CubeMarginChange();
+
 private:
 	std::unique_ptr<TuboEngine::Camera> camera_;
 	std::unique_ptr<TuboEngine::Object3d>pauseMenuCube_;//ポーズメニューキューブ
@@ -135,4 +137,9 @@ private:
 	bool prevRotating_ = false;
 
 	std::unique_ptr<FadeScreen> fadeScreen_ = nullptr;
+
+	// 壁の透明化フラグ
+	bool isTransparent_ = false;
+	float wallAlpha_;
+	float alpha_ = 0.2f;
 };

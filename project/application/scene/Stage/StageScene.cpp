@@ -85,6 +85,22 @@ void StageScene::Update() {
 		MouseCubeControl();
 	}
 
+	// 壁とキューブの間隔を調整
+	CubeMarginChange();
+
+	// Tキーで壁の透明化を切り替える
+	if (Input::GetInstance()->TriggerKey(DIK_T)) {
+		isTransparent_ = !isTransparent_;
+	}
+
+	wallAlpha_ = isTransparent_ ? alpha_ : 1.0f;
+
+	// 各セル(壁・コーン・四角)のトランスフォーム等の更新
+	for (auto& wall : wallObjects_) {
+		wall->SetModelColor({ 1,1,1,wallAlpha_ });
+	}
+
+
 	// パズル本体(キューブ操作＋クリア判定)
 	rubikCube_->Update();
 
@@ -374,6 +390,31 @@ void StageScene::LoadStage(int index) {
 	cleared_ = false;
 	rebuildRequested_ = true;
 	applyCubeState_ = true;
+}
+
+void StageScene::CubeMarginChange()
+{
+	// CubeMargin変更速度
+	const float marginSpeed = 0.2f;
+
+	float oldMargin = cubeMargin_;
+
+	// ↑キー：増加
+	if (Input::GetInstance()->PushKey(DIK_UP)) {
+		cubeMargin_ += marginSpeed;
+	}
+
+	// ↓キー：減少
+	if (Input::GetInstance()->PushKey(DIK_DOWN)) {
+		cubeMargin_ -= marginSpeed;
+	}
+
+	// ImGuiと同じ範囲に制限
+	cubeMargin_ = std::clamp(cubeMargin_, -1.5f, 20.0f);
+	// 変更されたら再生成
+	if (oldMargin != cubeMargin_) {
+		rebuildRequested_ = true;
+	}
 }
 
 // cubeCsvData_ をキューブの先端配置として適用する

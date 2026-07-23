@@ -79,8 +79,8 @@ private:
 	Vector2 center_ = { 640.0f,360.0f };//画面の中心座標
 
 	std::unique_ptr<TuboEngine::Sprite> gauge_;
-	// ゲージの位置(左上)
-	Vector2 gaugePosition_ = { 200.0f, 600.0f };
+	// ゲージの位置
+	Vector2 gaugePosition_ = { 300.0f, 600.0f };
 
 	// ゲージのデフォルトサイズ
 	const Vector2 gaugeDefaultSize_ = { 640.0f, 32.0f };

@@ -630,9 +630,19 @@ bool StageScene::PickBlock(float mx, float my, int cell[3], int normal[3]) {
 
 	for (int fa = 0; fa < 3; fa++) {
 		for (int s = -1; s <= 1; s += 2) {
-			// カメラがその面の外側にある(前向きの)面だけ対象。
-			if (s * GetAxis(eye, fa) <= 1.0f)
+			// この面がどれだけカメラを向いているかで前向き判定する。
+			// (旧: s*eye[fa] > 1.0 はカメラ位置の大きさ依存。ズームアウトで eye 成分が
+			//  大きくなると、ほぼ横向き=浅い角度の面まで通り、隣の面を誤って掴んで
+			//  「別軸/逆」に回る原因だった。正規化した角度なら全ズームで一貫する。)
+			float faceCenter[3] = { 0.0f, 0.0f, 0.0f };
+			faceCenter[fa] = kSurf * static_cast<float>(s);
+			float vd[3] = { eye.x - faceCenter[0], eye.y - faceCenter[1], eye.z - faceCenter[2] };
+			float vlen = std::sqrt(vd[0] * vd[0] + vd[1] * vd[1] + vd[2] * vd[2]);
+			if (vlen < 1e-6f)
 				continue;
+			float facing = (vd[fa] * static_cast<float>(s)) / vlen; // 面法線(s on fa)との内積
+			if (facing <= 0.15f)
+				continue; // 浅すぎ/裏向きの面は対象外
 
 			int inp[2], k = 0;
 			for (int ax = 0; ax < 3; ax++)

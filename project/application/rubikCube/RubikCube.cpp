@@ -115,7 +115,7 @@ void RubikCube::Update() {
 						object->Initialize("tip/tip.obj");
 					}
 					else if (shape == 2) {
-						object->Initialize("square/square.obj");
+						object->Initialize("square/tipSquare.obj");
 					}
 					else {
 						object->Initialize("tip/tip.obj");
@@ -242,6 +242,9 @@ void RubikCube::Debug() {
 		}
 		ImGui::Separator();
 	}
+	ImGui::End();
+	ImGui::Begin("Square");
+	ImGui::DragFloat("squarePosition_", &squarePosition_, 0.1f);
 	ImGui::End();
 
 }

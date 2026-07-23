@@ -183,5 +183,7 @@ private:
 
 
 	TuboEngine::Camera* camera_;
+
+	float squarePosition_ = 0.0f;
 };
 

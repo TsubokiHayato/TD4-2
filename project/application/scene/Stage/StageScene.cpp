@@ -94,10 +94,11 @@ void StageScene::Update() {
 	}
 
 	wallAlpha_ = isTransparent_ ? alpha_ : 1.0f;
+	color_.w = wallAlpha_;
 
 	// 各セル(壁・コーン・四角)のトランスフォーム等の更新
 	for (auto& wall : wallObjects_) {
-		wall->SetModelColor({ 1,1,1,wallAlpha_ });
+		wall->SetModelColor(color_);
 	}
 
 
@@ -221,6 +222,9 @@ void StageScene::ImGuiDraw() {
 	ImGui::SliderFloat("Pitch", &pitch_, -1.4f, 1.4f);
 	ImGui::DragFloat("Radius(zoom)", &targetRadius_, 0.1f, 3.0f, 50.0f);
 	ImGui::DragFloat3("Target", &target_.x, 0.1f);
+	ImGui::End();
+	ImGui::Begin("wallColor");
+	ImGui::ColorEdit4("Wall Color", &color_.x);
 	ImGui::End();
 	// TextManager
 	TuboEngine::TextManager::GetInstance()->DrawImGui();

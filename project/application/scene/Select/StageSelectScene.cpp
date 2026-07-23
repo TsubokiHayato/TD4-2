@@ -56,6 +56,19 @@ void StageSelectScene::Update() {
 	//カメラ更新
 	camera_->Update();
 	debugCamera_->Update(camera_.get());
+	// Tキーでチュートリアルへ
+	if (Input::GetInstance()->TriggerKey(DIK_T) && !isTutorialSelecting_) {
+		isTutorialSelecting_ = true;
+		fadeScreen_->FadeOut();
+	}
+
+	// フェード終了後にシーン遷移
+	if (isTutorialSelecting_) {
+		if (fadeScreen_->IsFadeOuting()) {
+			SceneManager::GetInstance()->ChangeScene(TUTORIAL);
+		}
+	}
+
 	//セレクトブロック
 	for (auto& block : blocks_) {
 		block->Update();

@@ -192,7 +192,6 @@ void StageScene::ImGuiDraw() {
 		rebuildRequested_ = true; // 実際の再構築は次フレーム冒頭
 	}
 	ImGui::End();
-
 	// カメラ調整(A/D=回転 W/S=上下 Q/E=ズーム)
 	ImGui::Begin("Camera");
 	ImGui::Text("A/D: rotate  W/S: up-down  Q/E: zoom");

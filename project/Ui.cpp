@@ -150,24 +150,25 @@ void Ui::UpdatePauseMenu() {
 		if (pauseSelectIndex_ < 0 || pauseSelectIndex_ > 3) {
 			assert(false);
 		}
+		TuboEngine::Input* in = TuboEngine::Input::GetInstance();
 		if (!isRotating_) {
-		//ポーズメニューの選択
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_LEFT)) {
+		//ポーズメニューの選択(←/A/W=左, →/D/S=右)
+		if (in->TriggerKey(DIK_LEFT) || in->TriggerKey(DIK_A) || in->TriggerKey(DIK_UP) || in->TriggerKey(DIK_W)) {
 
 			rotateDir_ = -1;
 			rotateTimer_ = 0.0f;
 			isRotating_ = true;
 		}
 
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RIGHT)) {
+		if (in->TriggerKey(DIK_RIGHT) || in->TriggerKey(DIK_D) || in->TriggerKey(DIK_DOWN) || in->TriggerKey(DIK_S)) {
 
 			rotateDir_ = 1;
 			rotateTimer_ = 0.0f;
 			isRotating_ = true;
 		}
 	}
-		//ポーズメニューの決定
-		if (TuboEngine::Input::GetInstance()->TriggerKey(DIK_RETURN)) {
+		//ポーズメニューの決定(Enter/Space)
+		if (in->TriggerKey(DIK_RETURN) || in->TriggerKey(DIK_SPACE)) {
 			switch (pauseSelectIndex_) {
 
 			case 0:

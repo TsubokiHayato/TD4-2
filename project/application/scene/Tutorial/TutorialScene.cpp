@@ -272,11 +272,14 @@ void TutorialScene::Object3DDraw() {
 	background->Draw();
 
 	if (!ui_->ShouldHideGameplay()) {
-		// 壁(穴つき)とキューブ本体+先端の描画
+		// 不透明なキューブ本体+先端を先に描いて深度を書き込む。
+		// そのあとに壁(半透明のことがある)を描く。順序を逆にすると半透明の壁が
+		// 深度を書き込み、後ろのキューブが深度テストで消えてしまう。
+		rubikCube_->Draw();
+		// 壁(穴つき)の描画
 		for (auto& wall : wallObjects_) {
 			wall->Draw();
 		}
-		rubikCube_->Draw();
 	}
 
 	//ポーズメニューキューブの描画

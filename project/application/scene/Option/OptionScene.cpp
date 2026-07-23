@@ -57,6 +57,10 @@ void OptionScene::Initialize() {
 	AudioManager::GetInstance()->PlayBgm("title.wav");
 	// 設定画面を開いた合図。
 	AudioManager::GetInstance()->PlaySe("window_open.mp3");
+
+	// シーン遷移フェード(入場で黒→クリア、退場で FadeOut)。
+	fadeScreen_ = std::make_unique<FadeScreen>();
+	fadeScreen_->Initialize();
 }
 
 // =============================================================================
@@ -95,9 +99,10 @@ void OptionScene::BuildItems() {
 
 	items_.push_back(Item{
 		"タイトルへ戻る", nullptr, nullptr,
-		[] {
+		[this] {
 			Settings::GetInstance()->Save();
-			SceneManager::GetInstance()->ChangeScene(TITLE);
+			pendingScene_ = TITLE; // フェードアウト完了後にタイトルへ
+			fadeScreen_->FadeOut();
 		}});
 }
 
@@ -180,6 +185,15 @@ void OptionScene::ApplySelection() {
 void OptionScene::Update() {
 	camera_->Update();
 
+	// フェードアウト中(遷移予約済み)は入力を止めて、真っ黒になったら切り替える。
+	if (pendingScene_ >= 0) {
+		TextManager::GetInstance()->UpdateAll();
+		fadeScreen_->Update();
+		if (fadeScreen_->IsFadeOuting())
+			SceneManager::GetInstance()->ChangeScene(pendingScene_);
+		return;
+	}
+
 	const int itemCount = static_cast<int>(items_.size());
 	if (itemCount > 0) {
 		// 項目移動
@@ -211,10 +225,14 @@ void OptionScene::Update() {
 	// キャンセル（保存してタイトルへ）
 	if (TakeCancelInput()) {
 		Settings::GetInstance()->Save();
-		SceneManager::GetInstance()->ChangeScene(TITLE);
+		pendingScene_ = TITLE; // フェードアウト完了後にタイトルへ
+		fadeScreen_->FadeOut();
 	}
 
 	TextManager::GetInstance()->UpdateAll();
+
+	// フェード進行(入場フェードイン用。退場は上の早期分岐で処理)。
+	fadeScreen_->Update();
 }
 
 int OptionScene::TakeVerticalInput() const {
@@ -287,6 +305,9 @@ void OptionScene::Finalize() {
 }
 
 void OptionScene::Object3DDraw() {}
-void OptionScene::SpriteDraw() { TextManager::GetInstance()->DrawAll(); }
+void OptionScene::SpriteDraw() {
+	TextManager::GetInstance()->DrawAll();
+	fadeScreen_->Draw();
+}
 void OptionScene::ImGuiDraw() { TextManager::GetInstance()->DrawImGui(); }
 void OptionScene::ParticleDraw() {}

@@ -175,6 +175,7 @@ bool StageClear::IsClear(const SixCube& current, const SixCube& required) {
 }
 
 void StageClear::DrawDebug(const SixCube& current, const SixCube& required) {
+#ifdef USE_IMGUI
     ImGui::Begin("Stage Clear");
 
     ImGui::Text("State: %s", IsClear(current, required) ? "CLEAR!" : "not yet");
@@ -211,4 +212,5 @@ void StageClear::DrawDebug(const SixCube& current, const SixCube& required) {
     }
 
     ImGui::End();
+    #endif
 }

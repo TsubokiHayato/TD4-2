@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Object3d.h"              // 背景スカイボックス
 #include "rubikCube/RubikCube.h"   // クリア演出の自動回転キューブ
+#include "FadeScreen.h"            // シーン遷移フェード
 #include <memory>
 #include <string>
 
@@ -35,4 +36,7 @@ private:
 
 	std::string particleName_; // 紙吹雪エミッター（Finalize で片付ける用）
 	float elapsed_ = 0.0f;     // 経過時間（入力受付を少し待つ／演出用）
+
+	std::unique_ptr<FadeScreen> fadeScreen_; // 入場フェードイン＋退場フェードアウト
+	int pendingScene_ = -1;                  // フェードアウト完了後に切り替える先(-1=無し)
 };

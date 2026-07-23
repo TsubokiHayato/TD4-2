@@ -118,6 +118,10 @@ void TitleScene::Initialize() {
 	// タイトル BGM を無音から 1.2 秒かけてフェードインしつつループ再生。
 	// （別シーンから戻ってきて同じ曲が鳴っているときは、フェードせず継続する）
 	AudioManager::GetInstance()->PlayBgmFadeIn("title.wav", 1.2f);
+
+	// シーン遷移フェード(入場で黒→クリア、退場で FadeOut)。
+	fadeScreen_ = std::make_unique<FadeScreen>();
+	fadeScreen_->Initialize();
 }
 
 void TitleScene::Update() {
@@ -148,16 +152,19 @@ void TitleScene::Update() {
 		rubikCube_->Update();
 	}
 
-	// メニュー移動（上下）
-	if (int dir = TakeVerticalInput(); dir != 0) {
-		selected_ = (selected_ + dir + kMenuCount) % kMenuCount; // 端でループ
-		AudioManager::GetInstance()->PlaySe("cursor_move.mp3"); // カーソル移動音
-	}
+	// フェードアウト中(遷移予約済み)は操作を止める。
+	if (pendingScene_ < 0) {
+		// メニュー移動（上下）
+		if (int dir = TakeVerticalInput(); dir != 0) {
+			selected_ = (selected_ + dir + kMenuCount) % kMenuCount; // 端でループ
+			AudioManager::GetInstance()->PlaySe("cursor_move.mp3"); // カーソル移動音
+		}
 
-	// 決定
-	if (TakeDecideInput()) {
-		AudioManager::GetInstance()->PlaySe("decide.mp3"); // 決定音
-		DecideSelection();
+		// 決定
+		if (TakeDecideInput()) {
+			AudioManager::GetInstance()->PlaySe("decide.mp3"); // 決定音
+			DecideSelection();
+		}
 	}
 
 	// メニューの見た目（登場アニメ・選択色・カーソル移動・明滅）を更新する。
@@ -170,6 +177,12 @@ void TitleScene::Update() {
 	ParticleManager::GetInstance()->Update(dt, camera_.get());
 
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
+
+	// フェード進行と、真っ黒になったら実際のシーン切り替え。
+	fadeScreen_->Update();
+	if (pendingScene_ >= 0 && fadeScreen_->IsFadeOuting()) {
+		SceneManager::GetInstance()->ChangeScene(pendingScene_);
+	}
 }
 
 // メニューの見た目を毎フレーム作り直す。
@@ -236,10 +249,12 @@ void TitleScene::DecideSelection() {
 	switch (selected_) {
 	case kMenuStart:
 		AudioManager::GetInstance()->PlayBgm("game.wav"); // ゲーム BGM へ切替
-		SceneManager::GetInstance()->ChangeScene(SELECT); // まずステージセレクトへ(ここがハブ)
+		pendingScene_ = SELECT; // フェードアウト後にステージセレクトへ(ここがハブ)
+		fadeScreen_->FadeOut();
 		break;
 	case kMenuOption:
-		SceneManager::GetInstance()->ChangeScene(OPTION); // 設定画面へ
+		pendingScene_ = OPTION; // フェードアウト後に設定画面へ
+		fadeScreen_->FadeOut();
 		break;
 	case kMenuExit:
 		PostQuitMessage(0); // アプリ終了（WM_QUIT）
@@ -306,6 +321,9 @@ void TitleScene::Object3DDraw() {
 	background->Draw();
 	if (rubikCube_) rubikCube_->Draw();
 } // 3Dオブジェクト描画(自動回転キューブ)
-void TitleScene::SpriteDraw() { TuboEngine::TextManager::GetInstance()->DrawAll(); } // 2Dスプライト描画
+void TitleScene::SpriteDraw() {
+	TuboEngine::TextManager::GetInstance()->DrawAll();
+	fadeScreen_->Draw();
+} // 2Dスプライト描画
 void TitleScene::ImGuiDraw() { TuboEngine::TextManager::GetInstance()->DrawImGui(); } // ImGui描画
 void TitleScene::ParticleDraw() { ParticleManager::GetInstance()->Draw(); }           // 背景パーティクル描画

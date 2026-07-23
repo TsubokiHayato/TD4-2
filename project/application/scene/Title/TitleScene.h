@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Vector2.h"
 #include "rubikCube/RubikCube.h"
+#include "FadeScreen.h" // シーン遷移フェード
 #include <array>
 #include <memory>
 #include <string>
@@ -71,4 +72,7 @@ private:
 	bool cursorInit_ = false;
 	// タイトル背景に舞うパーティクル（Finalize で片付ける用の名前）。
 	std::string particleName_;
+
+	std::unique_ptr<FadeScreen> fadeScreen_; // 入場フェードイン＋退場フェードアウト
+	int pendingScene_ = -1;                  // フェードアウト完了後に切り替える先(-1=無し)
 };

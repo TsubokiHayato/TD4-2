@@ -2,6 +2,7 @@
 #include "GameScenes.h"
 #include "SceneManager.h" // シーン遷移を使うとき用
 #include "TextManager.h"
+#include "audio/AudioManager.h" // BGM / SE(仮)
 
 #include <CubeMapConverter.h>
 #include <ImGuiManager.h>
@@ -61,6 +62,10 @@ void StageScene::Initialize() {
 
 	fadeScreen_ = std::make_unique<FadeScreen>();
 	fadeScreen_->Initialize();
+
+	// ステージ BGM(仮)。同じ曲が既に鳴っていれば PlayBgm は何もしないので、
+	// Title 経由でも Stage 直接起動でも確実にゲーム BGM が鳴る。
+	AudioManager::GetInstance()->PlayBgm("game.wav");
 }
 
 void StageScene::Update() {
@@ -156,6 +161,10 @@ void StageScene::Update() {
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 
 	fadeScreen_->Update();
+	// フェードアウトが真っ黒まで進んだら、予約したシーンへ実際に切り替える。
+	if (pendingScene_ >= 0 && fadeScreen_->IsFadeOuting()) {
+		SceneManager::GetInstance()->ChangeScene(pendingScene_);
+	}
 
 	//別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(CLEAR);   // 次フレームで切り替わる
 }
@@ -188,6 +197,7 @@ void StageScene::SpriteDraw() {
 
 } // TODO: 2Dスプライト描画
 void StageScene::ImGuiDraw() {
+#ifdef USE_IMGUI
 	// マウスのスライス選択プレビュー＋回転フラッシュ
 	DrawMouseGuide();
 	// クリア状態・操作状況のHUD(最優先で分かりやすく)
@@ -202,6 +212,8 @@ void StageScene::ImGuiDraw() {
 	DrawEditor();
 	// レベルエディター(キューブ先端)
 	DrawCubeEditor();
+
+	#ifdef USE_IMGUI
 	// ステージ(壁)サイズ調整。変更したら壁を作り直す。
 	ImGui::Begin("Stage Settings");
 	bool changed = false;
@@ -222,8 +234,10 @@ void StageScene::ImGuiDraw() {
 	ImGui::DragFloat("Radius(zoom)", &targetRadius_, 0.1f, 3.0f, 50.0f);
 	ImGui::DragFloat3("Target", &target_.x, 0.1f);
 	ImGui::End();
+	#endif	
 	// TextManager
 	TuboEngine::TextManager::GetInstance()->DrawImGui();
+#endif
 } // TODO: ImGui描画
 void StageScene::ParticleDraw() {} // TODO: パーティクル描画
 // キューブの回転アニメーション
@@ -262,18 +276,24 @@ void StageScene::CubeAnimation() {
 }
 // ポーズメニューでのシーン切り替え
 void StageScene::ChangeSceneFromPause() {
+	if (pendingScene_ >= 0)
+		return; // 既に遷移予約済み(フェードアウト中)なら二重予約しない
+
 	switch (ui_->GetPauseMenu()) {
-	case Ui::PauseMenuType::Retry:		
-		SceneManager::GetInstance()->ChangeScene(STAGE);
+	case Ui::PauseMenuType::Retry:
+		pendingScene_ = STAGE;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	case Ui::PauseMenuType::ToTitle:
-		SceneManager::GetInstance()->ChangeScene(TITLE);
+		pendingScene_ = TITLE;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	case Ui::PauseMenuType::ToSelect:
-		SceneManager::GetInstance()->ChangeScene(SELECT);
+		pendingScene_ = SELECT;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	default:
 		break;
@@ -447,6 +467,9 @@ void StageScene::CheckClear() {
 
 	if (StageClear::IsClear(rubikCube_->GetState(), required_)) {
 		cleared_ = true;
+		// ステージクリアSE(仮)。最終面は次の CLEAR 画面が fanfare を鳴らすので、
+		// ここは二重にならないよう軽い確定音にしておく。
+		AudioManager::GetInstance()->PlaySe("decide.mp3");
 		// このステージをクリア済みとして記録(static なのでシーンをまたいで保持)。
 		if (stageIndex_ >= 1 && stageIndex_ <= kStageCount)
 			stageCleared_[stageIndex_ - 1] = true;
@@ -464,13 +487,14 @@ void StageScene::CheckClear() {
 		}
 
 		if (stageIndex_ >= kStageCount || allCleared) {
-			// 祝福画面へ。次の周回を新品にするため記録をリセットしてから遷移。
+			// 祝福画面へ。次の周回を新品にするため記録をリセットしてから遷移予約。
 			for (int i = 0; i < kStageCount; ++i)
 				stageCleared_[i] = false;
-			SceneManager::GetInstance()->ChangeScene(CLEAR);
+			pendingScene_ = CLEAR;
 		} else {
-			SceneManager::GetInstance()->ChangeScene(SELECT);
+			pendingScene_ = SELECT;
 		}
+		fadeScreen_->FadeOut(); // フェードアウト開始(実際の切り替えは Update で)
 	}
 }
 
@@ -538,50 +562,83 @@ bool StageScene::PickBlock(float mx, float my, int cell[3], int normal[3]) {
 	float w = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientWidth());
 	float h = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientHeight());
 
+	// 前方投影(既知の正しい変換)だけで精密ピックする。逆行列は使わない。
+	// 各サーフェスセルの四隅を画面へ投影し、カーソルがその四角形の内側にある
+	// セルを選ぶ(点-内包判定)。カメラ手前の面が複数重なる場合は最も手前を採用。
 	Matrix4x4 vp = camera_->GetViewProjectionMatrix();
-	auto project = [&](Vector3 wp, ImVec2& out) -> bool {
-		Vector3 c = TransformCoord(wp, vp);
-		// カメラ背後(w<0でTransformCoordが破綻)を弾くため、ビュー空間zで前方判定
-		Vector3 vpos = TransformCoord(wp, camera_->GetViewMatrix());
+	Matrix4x4 view = camera_->GetViewMatrix();
+	Vector3 eye = camera_->GetTranslate();
+
+	auto project = [&](Vector3 wp, Vector2& out, float& depth) -> bool {
+		Vector3 vpos = TransformCoord(wp, view);
 		if (vpos.z <= 0.0f)
 			return false; // カメラの後ろ
-		out = ImVec2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
+		depth = vpos.z;
+		Vector3 c = TransformCoord(wp, vp);
+		out = Vector2{ (c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h };
 		return true;
 	};
 
-	Vector3 eye = camera_->GetTranslate();
-	float best = 1e30f;
+	// 点 p が三角形 abc の内側か(符号の一致で判定)
+	auto edgeSign = [](const Vector2& p, const Vector2& a, const Vector2& b) {
+		return (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
+	};
+	auto inTriangle = [&](const Vector2& p, const Vector2& a, const Vector2& b, const Vector2& c) {
+		float d1 = edgeSign(p, a, b), d2 = edgeSign(p, b, c), d3 = edgeSign(p, c, a);
+		bool hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+		bool hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+		return !(hasNeg && hasPos);
+	};
+
+	const Vector2 cursor{ mx, my };
+	const float kSurf = 1.5f; // 立方体の外面(セル中心は -1/0/1、外面は ±1.5)
+	float bestDepth = 1e30f;
 	bool found = false;
 
-	// 6面 × 面内3x3 のサーフェスセルを走査
 	for (int fa = 0; fa < 3; fa++) {
 		for (int s = -1; s <= 1; s += 2) {
-			// 前向きの面だけ対象(カメラがその面の外側にある)
+			// カメラがその面の外側にある(前向きの)面だけ対象。
 			if (s * GetAxis(eye, fa) <= 1.0f)
 				continue;
 
-			int inplane[2], k = 0;
+			int inp[2], k = 0;
 			for (int ax = 0; ax < 3; ax++)
 				if (ax != fa)
-					inplane[k++] = ax;
+					inp[k++] = ax;
 
 			for (int u = -1; u <= 1; u++) {
 				for (int v = -1; v <= 1; v++) {
-					float comp[3];
-					comp[fa] = static_cast<float>(s);
-					comp[inplane[0]] = static_cast<float>(u);
-					comp[inplane[1]] = static_cast<float>(v);
-					ImVec2 sp;
-					if (!project(Vector3{comp[0], comp[1], comp[2]}, sp))
+					// セルの四隅(外面 ±1.5、面内は中心 ±0.5 で隙間なくタイル状に)
+					static const int du[4] = { -1, 1, 1, -1 };
+					static const int dv[4] = { -1, -1, 1, 1 };
+					Vector2 corner[4];
+					float cd[4];
+					bool ok = true;
+					for (int q = 0; q < 4; q++) {
+						float comp[3];
+						comp[fa] = kSurf * static_cast<float>(s);
+						comp[inp[0]] = static_cast<float>(u) + 0.5f * du[q];
+						comp[inp[1]] = static_cast<float>(v) + 0.5f * dv[q];
+						if (!project(Vector3{ comp[0], comp[1], comp[2] }, corner[q], cd[q])) {
+							ok = false;
+							break;
+						}
+					}
+					if (!ok)
 						continue;
-					float dx = sp.x - mx, dy = sp.y - my;
-					float dist = dx * dx + dy * dy;
-					if (dist < best) {
-						best = dist;
+
+					bool inside = inTriangle(cursor, corner[0], corner[1], corner[2]) ||
+					              inTriangle(cursor, corner[0], corner[2], corner[3]);
+					if (!inside)
+						continue;
+
+					float depth = (cd[0] + cd[1] + cd[2] + cd[3]) * 0.25f;
+					if (depth < bestDepth) {
+						bestDepth = depth;
 						found = true;
 						cell[fa] = s;
-						cell[inplane[0]] = u;
-						cell[inplane[1]] = v;
+						cell[inp[0]] = u;
+						cell[inp[1]] = v;
 						normal[0] = normal[1] = normal[2] = 0;
 						normal[fa] = s;
 					}
@@ -590,11 +647,7 @@ bool StageScene::PickBlock(float mx, float my, int cell[3], int normal[3]) {
 		}
 	}
 
-	// カーソルからの許容半径(px)。これ以上遠ければキューブ外とみなす。
-	const float kPickRadius = 90.0f;
-	if (!found || best > kPickRadius * kPickRadius)
-		return false;
-	return true;
+	return found;
 }
 
 // マウスで指したブロックのスライスをドラッグで回す(RubikCubeは改変せずSetStateで反映)。
@@ -603,9 +656,16 @@ void StageScene::MouseCubeControl() {
 	float mx = input->GetMousePosition().x;
 	float my = input->GetMousePosition().y;
 
+	// ImGui ウィンドウ上にカーソルがある間はキューブ操作を無効化する。
+	// Release(USE_IMGUI 無し)では ImGui が無いので常に false 扱い。
+	bool wantCaptureMouse = false;
+#ifdef USE_IMGUI
+	wantCaptureMouse = ImGui::GetIO().WantCaptureMouse;
+#endif
+
 	// ホバー中のブロックを毎フレーム更新(ハイライト用)
 	pickValid_ = false;
-	if (!ImGui::GetIO().WantCaptureMouse) {
+	if (!wantCaptureMouse) {
 		int cell[3], nrm[3];
 		if (PickBlock(mx, my, cell, nrm)) {
 			pickValid_ = true;
@@ -618,13 +678,17 @@ void StageScene::MouseCubeControl() {
 		}
 	}
 
-	if (ImGui::GetIO().WantCaptureMouse) {
+	if (wantCaptureMouse) {
 		dragging_ = false;
 		return;
 	}
 
-	// 左押下: ブロックを指していたら掴む(押した瞬間のみ)
-	if (input->IsTriggerMouse(0) && pickValid_) {
+	// 掴む: 押した瞬間、または「連続回転」用にボタンを保持したまま(まだ掴んで
+	// おらず・回転アニメ中でないとき)カーソル直下のブロックを掴み直す。
+	// これで押しっぱなしのままドラッグを続けるだけで何手でも回せる。
+	bool wantGrab = input->IsTriggerMouse(0) ||
+	                (!dragging_ && input->IsPressMouse(0) && !rubikCube_->IsRotating());
+	if (wantGrab && pickValid_) {
 		dragging_ = true;
 		dragAccumX_ = 0.0f;
 		dragAccumY_ = 0.0f;
@@ -648,7 +712,7 @@ void StageScene::MouseCubeControl() {
 	if (rubikCube_->IsRotating())
 		return;
 
-	const float kThreshold = 45.0f;
+	const float kThreshold = 25.0f; // 反応を軽く(小さめのドラッグで確定)
 	if (std::abs(dragAccumX_) < kThreshold && std::abs(dragAccumY_) < kThreshold)
 		return;
 
@@ -666,14 +730,14 @@ void StageScene::MouseCubeControl() {
 	float w = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientWidth());
 	float h = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientHeight());
 	Matrix4x4 vp = camera_->GetViewProjectionMatrix();
-	auto project = [&](Vector3 wpt) -> ImVec2 {
+	auto project = [&](Vector3 wpt) -> Vector2 {
 		Vector3 c = TransformCoord(wpt, vp);
-		return ImVec2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
+		return Vector2{(c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h};
 	};
 
 	// 掴んだブロックの中心と、そのスクリーン位置
 	Vector3 center = {(float)dragPickCell_[0], (float)dragPickCell_[1], (float)dragPickCell_[2]};
-	ImVec2 sc = project(center);
+	Vector2 sc = project(center);
 
 	// 「回転軸×向き」の各候補で、実際にエンジンが回したときブロックが画面上で
 	// どちらへ動くかをシミュレートし、ドラッグ方向に最も一致する候補を選ぶ。
@@ -687,9 +751,15 @@ void StageScene::MouseCubeControl() {
 			// エンジンの回転角の符号 (UpdateRotationAnimation と同じ規約)
 			float engineSign = ((d == 1) ? 1.0f : -1.0f) * RotationSignOf(axis);
 			Vector3 moved = RotateAroundAxisLocal(center, axis, kEps * engineSign);
-			ImVec2 sm = project(moved);
-			ImVec2 dirScreen = {sm.x - sc.x, sm.y - sc.y};
-			float score = dragAccumX_ * dirScreen.x + dragAccumY_ * dirScreen.y;
+			Vector2 sm = project(moved);
+			Vector2 dirScreen = {sm.x - sc.x, sm.y - sc.y};
+			// 画面上の移動量で正規化して「方向の一致度」で比較する。
+			// (正規化しないと、斜め視点で画面上を大きく動く軸が、ドラッグに
+			//  よく沿う小さい軸より不当に勝ってしまい、回る向きがおかしくなる。)
+			float dsLen = std::sqrt(dirScreen.x * dirScreen.x + dirScreen.y * dirScreen.y);
+			if (dsLen < 1e-4f)
+				continue; // その候補は画面上ほぼ動かない(=判定に使えない)
+			float score = (dragAccumX_ * dirScreen.x + dragAccumY_ * dirScreen.y) / dsLen;
 			if (score > best) {
 				best = score;
 				rotAxis = axis;
@@ -707,14 +777,18 @@ void StageScene::MouseCubeControl() {
 	// (次の回転はもう一度ブロックを掴み直す)。
 	if (rubikCube_->RequestRotation(rotAxis, row, dir)) {
 		rotateFlash_ = 40.0f;
+		AudioManager::GetInstance()->PlaySe("cursor_move.mp3"); // 回転SE(仮)
 	}
 	dragging_ = false;
 	dragAccumX_ = 0.0f;
 	dragAccumY_ = 0.0f;
+
+	
 }
 
 // 指しているブロックの面をハイライトし、回転フラッシュを描く
 void StageScene::DrawMouseGuide() {
+#ifdef USE_IMGUI
 	using namespace TuboEngine::Math;
 	ImGuiIO& io = ImGui::GetIO();
 	float w = io.DisplaySize.x;
@@ -773,6 +847,7 @@ void StageScene::DrawMouseGuide() {
 		ImVec2 ts = ImGui::CalcTextSize(t);
 		dl->AddText(ImGui::GetFont(), fs, ImVec2(w * 0.5f - ts.x * scale * 0.5f, h * 0.10f), IM_COL32(120, 255, 120, 255), t);
 	}
+#endif
 }
 
 // クリア状態・操作状況を分かりやすく表示するHUD
@@ -787,7 +862,7 @@ void StageScene::DrawHud() {
 				if (required_.oneCube[i].cube[r][c] >= 1 && cur.oneCube[i].cube[r][c] != required_.oneCube[i].cube[r][c])
 					remain++;
 	bool clear = (remain == 0);
-
+#ifdef USE_IMGUI
 	ImGui::Begin("HUD");
 	ImGui::Text("Stage: %d / %d", stageIndex_, kStageCount);
 	if (ImGui::Button("< Prev")) {
@@ -938,10 +1013,12 @@ void StageScene::DrawEditor() {
 	}
 
 	ImGui::End();
+	#endif
 }
 
 // キューブ先端エディター(ImGui でキューブCSVを直接編集)
 void StageScene::DrawCubeEditor() {
+#ifdef USE_IMGUI
 	ImGui::Begin("Cube Tip Editor");
 
 	ImGui::TextWrapped("Click a cell to cycle tip: Empty -> Cone -> Square");
@@ -1019,4 +1096,5 @@ void StageScene::DrawCubeEditor() {
 	}
 
 	ImGui::End();
+#endif
 }

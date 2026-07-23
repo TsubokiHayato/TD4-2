@@ -225,6 +225,7 @@ void RubikCube::Draw() {
 
 void RubikCube::Debug() {
 
+		   #ifdef USE_IMGUI
 	ImGui::Begin("Rubik Cube");
 
 	const char* axisNames[] = { "X", "Y", "Z" };
@@ -243,6 +244,7 @@ void RubikCube::Debug() {
 		ImGui::Separator();
 	}
 	ImGui::End();
+	#endif
 
 }
 //回転アニメーション開始

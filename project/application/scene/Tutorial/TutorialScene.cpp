@@ -250,6 +250,10 @@ void TutorialScene::Update() {
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 
 	fadeScreen_->Update();
+	// フェードアウトが真っ黒まで進んだら、予約したシーンへ実際に切り替える。
+	if (pendingScene_ >= 0 && fadeScreen_->IsFadeOuting()) {
+		SceneManager::GetInstance()->ChangeScene(pendingScene_);
+	}
 
 	// 別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(CLEAR);   // 次フレームで切り替わる
 }
@@ -323,6 +327,7 @@ void TutorialScene::ImGuiDraw() {
 	//レベルエディター(キューブ先端)
 	DrawCubeEditor();
 	//ステージ(壁)サイズ調整。変更したら壁を作り直す。
+#ifdef USE_IMGUI
 	ImGui::Begin("Stage Settings");
 	bool changed = false;
 	// キューブと壁の距離(これを上げると壁がキューブから離れる)
@@ -343,6 +348,7 @@ void TutorialScene::ImGuiDraw() {
 	ImGui::DragFloat("Radius(zoom)", &targetRadius_, 0.1f, 3.0f, 50.0f);
 	ImGui::DragFloat3("Target", &target_.x, 0.1f);
 	ImGui::End();
+	#endif
 	//TextManager
 	TuboEngine::TextManager::GetInstance()->DrawImGui();
 }    // TODO: ImGui描画
@@ -383,18 +389,24 @@ void TutorialScene::CubeAnimation() {
 }
 //ポーズメニューでのシーン切り替え
 void TutorialScene::ChangeSceneFromPause() {
+	if (pendingScene_ >= 0)
+		return; // 既に遷移予約済み(フェードアウト中)なら二重予約しない
+
 	switch (ui_->GetPauseMenu()) {
 	case Ui::PauseMenuType::Retry:
-		SceneManager::GetInstance()->ChangeScene(STAGE);
+		pendingScene_ = STAGE;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	case Ui::PauseMenuType::ToTitle:
-		SceneManager::GetInstance()->ChangeScene(TITLE);
+		pendingScene_ = TITLE;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	case Ui::PauseMenuType::ToSelect:
-		SceneManager::GetInstance()->ChangeScene(SELECT);
+		pendingScene_ = SELECT;
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
+		fadeScreen_->FadeOut();
 		break;
 	default:
 		break;
@@ -759,14 +771,15 @@ void TutorialScene::CheckClear() {
 		}
 
 		if (allCleared) {
-			// 全クリア到達。次の周回を新品にするため記録をリセットしてから祝福画面へ。
+			// 全クリア到達。次の周回を新品にするため記録をリセットしてから遷移予約。
 			for (int i = 0; i < kStageCount; ++i)
 				stageCleared_[i] = false;
-			SceneManager::GetInstance()->ChangeScene(CLEAR);
+			pendingScene_ = CLEAR;
 		}
 		else {
-			SceneManager::GetInstance()->ChangeScene(SELECT);
+			pendingScene_ = SELECT;
 		}
+		fadeScreen_->FadeOut(); // フェードアウト開始(実際の切り替えは Update で)
 	}
 }
 
@@ -831,13 +844,13 @@ bool TutorialScene::PickBlock(float mx, float my, int cell[3], int normal[3]) {
 	float h = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientHeight());
 
 	Matrix4x4 vp = camera_->GetViewProjectionMatrix();
-	auto project = [&](Vector3 wp, ImVec2& out) -> bool {
+	auto project = [&](Vector3 wp, Vector2& out) -> bool {
 		Vector3 c = TransformCoord(wp, vp);
 		// カメラ背後(w<0でTransformCoordが破綻)を弾くため、ビュー空間zで前方判定
 		Vector3 vpos = TransformCoord(wp, camera_->GetViewMatrix());
 		if (vpos.z <= 0.0f)
 			return false; // カメラの後ろ
-		out = ImVec2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
+		out = Vector2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
 		return true;
 		};
 
@@ -863,7 +876,7 @@ bool TutorialScene::PickBlock(float mx, float my, int cell[3], int normal[3]) {
 					comp[fa] = static_cast<float>(s);
 					comp[inplane[0]] = static_cast<float>(u);
 					comp[inplane[1]] = static_cast<float>(v);
-					ImVec2 sp;
+					Vector2 sp;
 					if (!project(Vector3{ comp[0], comp[1], comp[2] }, sp))
 						continue;
 					float dx = sp.x - mx, dy = sp.y - my;
@@ -895,19 +908,26 @@ void TutorialScene::MouseCubeControl() {
 	float mx = input->GetMousePosition().x;
 	float my = input->GetMousePosition().y;
 
+	// ImGui ウィンドウ上にカーソルがある間はキューブ操作を無効化する。
+	// Release(USE_IMGUI 無し)では ImGui が無いので常に false 扱い。
+	bool wantCaptureMouse = false;
+#ifdef USE_IMGUI
+	wantCaptureMouse = ImGui::GetIO().WantCaptureMouse;
+#endif
+
 	// ホバー中のブロックを毎フレーム更新(ハイライト用)
 	pickValid_ = false;
-	if (!ImGui::GetIO().WantCaptureMouse) {
+	if (!wantCaptureMouse) {
 		int cell[3], nrm[3];
 		if (PickBlock(mx, my, cell, nrm)) {
 			pickValid_ = true;
 			for (int i = 0; i < 3; i++) { pickCell_[i] = cell[i]; pickNormal_[i] = nrm[i]; }
-			//回転できる方向の表示	
+			//回転できる方向の表示
 			rubikCube_->GuideRotationAxis(nrm, cell);
 		}
 	}
 
-	if (ImGui::GetIO().WantCaptureMouse) {
+	if (wantCaptureMouse) {
 		dragging_ = false;
 		return;
 	}
@@ -955,14 +975,14 @@ void TutorialScene::MouseCubeControl() {
 	float w = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientWidth());
 	float h = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientHeight());
 	Matrix4x4 vp = camera_->GetViewProjectionMatrix();
-	auto project = [&](Vector3 wpt) -> ImVec2 {
+	auto project = [&](Vector3 wpt) -> Vector2 {
 		Vector3 c = TransformCoord(wpt, vp);
-		return ImVec2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
+		return Vector2((c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h);
 		};
 
 	// 掴んだブロックの中心と、そのスクリーン位置
 	Vector3 center = { (float)dragPickCell_[0], (float)dragPickCell_[1], (float)dragPickCell_[2] };
-	ImVec2 sc = project(center);
+	Vector2 sc = project(center);
 
 	// 「回転軸×向き」の各候補で、実際にエンジンが回したときブロックが画面上で
 	// どちらへ動くかをシミュレートし、ドラッグ方向に最も一致する候補を選ぶ。
@@ -976,8 +996,8 @@ void TutorialScene::MouseCubeControl() {
 			// エンジンの回転角の符号 (UpdateRotationAnimation と同じ規約)
 			float engineSign = ((d == 1) ? 1.0f : -1.0f) * RotationSignOf(axis);
 			Vector3 moved = RotateAroundAxisLocal(center, axis, kEps * engineSign);
-			ImVec2 sm = project(moved);
-			ImVec2 dirScreen = { sm.x - sc.x, sm.y - sc.y };
+			Vector2 sm = project(moved);
+			Vector2 dirScreen = { sm.x - sc.x, sm.y - sc.y };
 			float score = dragAccumX_ * dirScreen.x + dragAccumY_ * dirScreen.y;
 			if (score > best) {
 				best = score;
@@ -1004,6 +1024,7 @@ void TutorialScene::MouseCubeControl() {
 
 //指しているブロックの面をハイライトし、回転フラッシュを描く
 void TutorialScene::DrawMouseGuide() {
+#ifdef USE_IMGUI
 	using namespace TuboEngine::Math;
 	ImGuiIO& io = ImGui::GetIO();
 	float w = io.DisplaySize.x;
@@ -1053,6 +1074,7 @@ void TutorialScene::DrawMouseGuide() {
 			ImVec2(w * 0.5f - ts.x * scale * 0.5f, h * 0.10f),
 			IM_COL32(120, 255, 120, 255), t);
 	}
+#endif
 }
 
 //クリア状態・操作状況を分かりやすく表示するHUD
@@ -1069,6 +1091,7 @@ void TutorialScene::DrawHud() {
 					remain++;
 	bool clear = (remain == 0);
 
+	#ifdef USE_IMGUI
 	ImGui::Begin("HUD");
 	ImGui::Text("Stage: %d / %d", stageIndex_, kStageCount);
 	if (ImGui::Button("< Prev")) { LoadStage(stageIndex_ - 1); }
@@ -1118,10 +1141,14 @@ void TutorialScene::DrawHud() {
 		ImGui::SetWindowFontScale(1.0f);
 		ImGui::End();
 	}
+
+	#endif
 }
 
 //レベルエディター(ImGui でCSVを直接編集)
 void TutorialScene::DrawEditor() {
+
+	#ifdef USE_IMGUI
 	ImGui::Begin("Level Editor");
 
 	ImGui::Checkbox("Editor Mode (stop clear transition)", &editorEnabled_);
@@ -1190,10 +1217,13 @@ void TutorialScene::DrawEditor() {
 	}
 
 	ImGui::End();
+
+	#endif
 }
 
 //キューブ先端エディター(ImGui でキューブCSVを直接編集)
 void TutorialScene::DrawCubeEditor() {
+#ifdef USE_IMGUI
 	ImGui::Begin("Cube Tip Editor");
 
 	ImGui::TextWrapped("Click a cell to cycle tip: Empty -> Cone -> Square");
@@ -1259,4 +1289,6 @@ void TutorialScene::DrawCubeEditor() {
 	}
 
 	ImGui::End();
+
+	#endif
 }

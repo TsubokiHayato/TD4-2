@@ -562,64 +562,92 @@ bool StageScene::PickBlock(float mx, float my, int cell[3], int normal[3]) {
 	float w = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientWidth());
 	float h = static_cast<float>(TuboEngine::WinApp::GetInstance()->GetClientHeight());
 
-	// --- カーソル位置からカメラ光線を作る(スクリーン→NDC→ワールド逆変換) ---
-	// 以前は「27セルの投影中心のうちカーソルに一番近いもの」を選んでいたため、
-	// ズームや斜め視点で隣のセルを誤って掴んだ。ここでは光線とキューブ(箱)の
-	// 交差を厳密に解き、カーソル直下の面を確実に掴む。
-	float ndcX = (mx / w) * 2.0f - 1.0f;
-	float ndcY = 1.0f - (my / h) * 2.0f;
-	Matrix4x4 invVP = Inverse(camera_->GetViewProjectionMatrix());
-	Vector3 nearW = TransformCoord(Vector3{ ndcX, ndcY, 0.0f }, invVP); // 近クリップ面上
-	Vector3 farW  = TransformCoord(Vector3{ ndcX, ndcY, 1.0f }, invVP); // 遠クリップ面上
+	// 前方投影(既知の正しい変換)だけで精密ピックする。逆行列は使わない。
+	// 各サーフェスセルの四隅を画面へ投影し、カーソルがその四角形の内側にある
+	// セルを選ぶ(点-内包判定)。カメラ手前の面が複数重なる場合は最も手前を採用。
+	Matrix4x4 vp = camera_->GetViewProjectionMatrix();
+	Matrix4x4 view = camera_->GetViewMatrix();
+	Vector3 eye = camera_->GetTranslate();
 
-	float o[3] = { nearW.x, nearW.y, nearW.z };
-	float d[3] = { farW.x - nearW.x, farW.y - nearW.y, farW.z - nearW.z };
-	float dlen = std::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
-	if (dlen < 1e-6f)
-		return false;
-	for (int i = 0; i < 3; i++) d[i] /= dlen;
-
-	// キューブを [-H,H]^3 の箱として扱う。セル中心は -1/0/1、各セルが幅1の
-	// スラブを占め、外面は ±1.5。スラブ法で入口(最初に当たる面)を求める。
-	const float H = 1.5f;
-	float tmin = -1e30f, tmax = 1e30f;
-	int entryAxis = -1;
-	for (int i = 0; i < 3; i++) {
-		if (std::fabs(d[i]) < 1e-8f) {
-			if (o[i] < -H || o[i] > H)
-				return false; // 光線が軸に平行かつスラブ外
-			continue;
-		}
-		float inv = 1.0f / d[i];
-		float t1 = (-H - o[i]) * inv;
-		float t2 = (H - o[i]) * inv;
-		if (t1 > t2) { float tmp = t1; t1 = t2; t2 = tmp; }
-		if (t1 > tmin) { tmin = t1; entryAxis = i; } // 入口面を与えた軸
-		if (t2 < tmax) tmax = t2;
-		if (tmin > tmax)
-			return false; // 箱を外れている(未ヒット)
-	}
-	if (entryAxis < 0 || tmax < 0.0f)
-		return false;
-
-	float t = (tmin > 0.0f) ? tmin : 0.0f; // カメラが箱の内側なら 0
-	float hit[3] = { o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t };
-
-	// 入口面の軸と符号 → 掴んだ面の法線。面内2軸はヒット位置を最寄りセルへ丸める。
-	int fa = entryAxis;
-	int s = (hit[fa] >= 0.0f) ? 1 : -1;
-	auto roundCell = [](float v) -> int {
-		int c = static_cast<int>(std::lround(v));
-		return (c < -1) ? -1 : (c > 1) ? 1 : c;
+	auto project = [&](Vector3 wp, Vector2& out, float& depth) -> bool {
+		Vector3 vpos = TransformCoord(wp, view);
+		if (vpos.z <= 0.0f)
+			return false; // カメラの後ろ
+		depth = vpos.z;
+		Vector3 c = TransformCoord(wp, vp);
+		out = Vector2{ (c.x * 0.5f + 0.5f) * w, (1.0f - (c.y * 0.5f + 0.5f)) * h };
+		return true;
 	};
-	cell[0] = cell[1] = cell[2] = 0;
-	cell[fa] = s;
-	for (int ax = 0; ax < 3; ax++)
-		if (ax != fa)
-			cell[ax] = roundCell(hit[ax]);
-	normal[0] = normal[1] = normal[2] = 0;
-	normal[fa] = s;
-	return true;
+
+	// 点 p が三角形 abc の内側か(符号の一致で判定)
+	auto edgeSign = [](const Vector2& p, const Vector2& a, const Vector2& b) {
+		return (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
+	};
+	auto inTriangle = [&](const Vector2& p, const Vector2& a, const Vector2& b, const Vector2& c) {
+		float d1 = edgeSign(p, a, b), d2 = edgeSign(p, b, c), d3 = edgeSign(p, c, a);
+		bool hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+		bool hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+		return !(hasNeg && hasPos);
+	};
+
+	const Vector2 cursor{ mx, my };
+	const float kSurf = 1.5f; // 立方体の外面(セル中心は -1/0/1、外面は ±1.5)
+	float bestDepth = 1e30f;
+	bool found = false;
+
+	for (int fa = 0; fa < 3; fa++) {
+		for (int s = -1; s <= 1; s += 2) {
+			// カメラがその面の外側にある(前向きの)面だけ対象。
+			if (s * GetAxis(eye, fa) <= 1.0f)
+				continue;
+
+			int inp[2], k = 0;
+			for (int ax = 0; ax < 3; ax++)
+				if (ax != fa)
+					inp[k++] = ax;
+
+			for (int u = -1; u <= 1; u++) {
+				for (int v = -1; v <= 1; v++) {
+					// セルの四隅(外面 ±1.5、面内は中心 ±0.5 で隙間なくタイル状に)
+					static const int du[4] = { -1, 1, 1, -1 };
+					static const int dv[4] = { -1, -1, 1, 1 };
+					Vector2 corner[4];
+					float cd[4];
+					bool ok = true;
+					for (int q = 0; q < 4; q++) {
+						float comp[3];
+						comp[fa] = kSurf * static_cast<float>(s);
+						comp[inp[0]] = static_cast<float>(u) + 0.5f * du[q];
+						comp[inp[1]] = static_cast<float>(v) + 0.5f * dv[q];
+						if (!project(Vector3{ comp[0], comp[1], comp[2] }, corner[q], cd[q])) {
+							ok = false;
+							break;
+						}
+					}
+					if (!ok)
+						continue;
+
+					bool inside = inTriangle(cursor, corner[0], corner[1], corner[2]) ||
+					              inTriangle(cursor, corner[0], corner[2], corner[3]);
+					if (!inside)
+						continue;
+
+					float depth = (cd[0] + cd[1] + cd[2] + cd[3]) * 0.25f;
+					if (depth < bestDepth) {
+						bestDepth = depth;
+						found = true;
+						cell[fa] = s;
+						cell[inp[0]] = u;
+						cell[inp[1]] = v;
+						normal[0] = normal[1] = normal[2] = 0;
+						normal[fa] = s;
+					}
+				}
+			}
+		}
+	}
+
+	return found;
 }
 
 // マウスで指したブロックのスライスをドラッグで回す(RubikCubeは改変せずSetStateで反映)。
@@ -725,7 +753,13 @@ void StageScene::MouseCubeControl() {
 			Vector3 moved = RotateAroundAxisLocal(center, axis, kEps * engineSign);
 			Vector2 sm = project(moved);
 			Vector2 dirScreen = {sm.x - sc.x, sm.y - sc.y};
-			float score = dragAccumX_ * dirScreen.x + dragAccumY_ * dirScreen.y;
+			// 画面上の移動量で正規化して「方向の一致度」で比較する。
+			// (正規化しないと、斜め視点で画面上を大きく動く軸が、ドラッグに
+			//  よく沿う小さい軸より不当に勝ってしまい、回る向きがおかしくなる。)
+			float dsLen = std::sqrt(dirScreen.x * dirScreen.x + dirScreen.y * dirScreen.y);
+			if (dsLen < 1e-4f)
+				continue; // その候補は画面上ほぼ動かない(=判定に使えない)
+			float score = (dragAccumX_ * dirScreen.x + dragAccumY_ * dirScreen.y) / dsLen;
 			if (score > best) {
 				best = score;
 				rotAxis = axis;

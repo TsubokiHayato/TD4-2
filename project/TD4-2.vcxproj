@@ -120,6 +120,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClCompile Include="application\RubikCube\BaseRubikCubeState.cpp" />
     <ClCompile Include="CubeMapConverter.cpp" />
+    <ClCompile Include="FadeScreen.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="application\Order.cpp" />
     <ClCompile Include="application\scene\Sample\SampleScene.cpp" />
@@ -163,6 +164,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="application\RubikCube\RubikCube.h" />
     <ClInclude Include="application\stageClear\StageClear.h" />
     <ClInclude Include="application\scene\Select\StageSelectScene.h" />
+    <ClInclude Include="FadeScreen.h" />
     <ClInclude Include="Ui.h" />
     <ClInclude Include="application\scene\Option\OptionScene.h" />
     <ClInclude Include="application\settings\Settings.h" />

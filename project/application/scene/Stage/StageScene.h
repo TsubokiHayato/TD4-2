@@ -12,6 +12,8 @@
 #include <vector>
 #include <string>
 
+#include "FadeScreen.h"
+
 // ゲーム本編（ステージ）
 // ここに自分の処理を足していく（カメラだけ持った最小の雛形）。
 class StageScene : public IScene {
@@ -129,4 +131,6 @@ private:
 	float cubeScale_ = 0.0f;
 	float basecubeAngle_ = 0.0f;
 	bool prevRotating_ = false;
+
+	std::unique_ptr<FadeScreen> fadeScreen_ = nullptr;
 };

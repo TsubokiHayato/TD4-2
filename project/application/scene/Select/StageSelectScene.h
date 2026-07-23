@@ -6,6 +6,8 @@
 #include <array>
 #include <memory>
 
+#include "FadeScreen.h"
+
 //ステージセレクトシーン
 class StageSelectScene : public IScene {
 public:
@@ -39,4 +41,7 @@ private:
 	int selectedY_ = 0; // 選択中の行
 	// 2D座標を1D配列のインデックスに変換する
 	static int ToIndex(int x, int y) { return y * kGridSize + x; }
+
+	std::unique_ptr<FadeScreen> fadeScreen_ = nullptr;
+	bool isSelecting_ = false;//選択し、決定ボタンを押した
 };

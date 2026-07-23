@@ -24,6 +24,7 @@
     <ClCompile Include="StageLoader.cpp" />
     <ClCompile Include="StageBuilder.cpp" />
     <ClCompile Include="application\scene\Select\StageSelectScene.cpp" />
+    <ClCompile Include="FadeScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
@@ -55,6 +56,7 @@
     <ClInclude Include="application\WallData.h" />
     <ClInclude Include="StageBuilder.h" />
     <ClInclude Include="application\scene\Select\StageSelectScene.h" />
+    <ClInclude Include="FadeScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="application">

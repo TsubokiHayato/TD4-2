@@ -47,6 +47,9 @@ void StageSelectScene::Initialize() {
 
 	selectedX_ = 0;
 	selectedY_ = 0;
+
+	fadeScreen_ = std::make_unique<FadeScreen>();
+	fadeScreen_->Initialize();
 }
 //更新
 void StageSelectScene::Update() {
@@ -66,6 +69,8 @@ void StageSelectScene::Update() {
 	// テキストの更新
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 	// 別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(STAGE);   // 次フレームで切り替わる
+
+	fadeScreen_->Update();
 }
 
 void StageSelectScene::Finalize() {
@@ -81,7 +86,12 @@ void StageSelectScene::Object3DDraw() {
 	}
 	
 } // TODO: 3Dオブジェクト描画
-void StageSelectScene::SpriteDraw() { TuboEngine::TextManager::GetInstance()->DrawAll(); }   // TODO: 2Dスプライト描画
+void StageSelectScene::SpriteDraw() { 
+	TuboEngine::TextManager::GetInstance()->DrawAll();
+	fadeScreen_->Draw();
+
+}   // TODO: 2Dスプライト描画
+
 void StageSelectScene::ImGuiDraw() {
 	ImGui::Begin("Stage Select");
 	ImGui::Text("Selected : (%d, %d)  Index: %d / %d",
@@ -126,7 +136,11 @@ void StageSelectScene::UpdateBlockAppearance() {
 void StageSelectScene::ConfirmSelection() {
 	Input* input = Input::GetInstance();
 
-	if (input->TriggerKey(DIK_RETURN)) {
+	if (input->TriggerKey(DIK_RETURN) || isSelecting_) {
+		isSelecting_ = true;
+		fadeScreen_->FadeOut();
+		if (!fadeScreen_->IsFadeOuting()) return;
+
 		int index = ToIndex(selectedX_, selectedY_); 
 		StageScene::SetSelectedStageIndex(index + 1);
 		SceneManager::GetInstance()->ChangeScene(STAGE);

@@ -57,6 +57,9 @@ void StageScene::Initialize() {
 	ApplyCubeCsv();
 
 	TuboEngine::TextManager::GetInstance()->LoadTextLayout("Resources/Text/Stage.json");
+
+	fadeScreen_ = std::make_unique<FadeScreen>();
+	fadeScreen_->Initialize();
 }
 
 void StageScene::Update() {
@@ -135,6 +138,8 @@ void StageScene::Update() {
 	// TextManagerの更新
 	TuboEngine::TextManager::GetInstance()->UpdateAll();
 
+	fadeScreen_->Update();
+
 	//別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(CLEAR);   // 次フレームで切り替わる
 }
 
@@ -159,7 +164,8 @@ void StageScene::Object3DDraw() {
 } // TODO: 3Dオブジェクト描画
 void StageScene::SpriteDraw() {
 	// UIの描画
-	ui_->DrawStageScene();
+	ui_->DrawStageScene();	
+	fadeScreen_->Draw();
 	// TextManager
 	TuboEngine::TextManager::GetInstance()->DrawAll();
 
@@ -241,7 +247,7 @@ void StageScene::CubeAnimation() {
 // ポーズメニューでのシーン切り替え
 void StageScene::ChangeSceneFromPause() {
 	switch (ui_->GetPauseMenu()) {
-	case Ui::PauseMenuType::Retry:
+	case Ui::PauseMenuType::Retry:		
 		SceneManager::GetInstance()->ChangeScene(STAGE);
 		ui_->SetPauseMenu(Ui::PauseMenuType::None);
 		break;

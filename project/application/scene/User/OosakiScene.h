@@ -5,6 +5,8 @@
 
 #include "RubikCube/RubikCube.h"
 
+#include "ClearEffect.h"
+
 // User1 の個人開発用シーン（サンドボックス）
 // ここに自分の処理を足していく（カメラだけ持った最小の雛形）。
  class OosakiScene : public IScene {
@@ -23,4 +25,6 @@ private:
 	TuboEngine::Transform transform_;
 
 	std::unique_ptr<RubikCube> rubikCube_ = nullptr;
+
+	std::unique_ptr<ClearEffect> clearEffect_ = nullptr;
 };

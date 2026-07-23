@@ -8,6 +8,9 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include "ParticleManager.h"  // パーティクル（シングルトン。Update/Draw はシーンが駆動する）
+
+
 void OosakiScene::Initialize() {
 	// 最低限のカメラ
 	camera_ = std::make_unique<TuboEngine::Camera>();
@@ -23,6 +26,9 @@ void OosakiScene::Initialize() {
 	transform_.translate = { 0,0,-15.0f };
 	transform_.rotate = { 0,0,0 };
 	transform_.scale = { 1,1,1 };
+	
+	clearEffect_ = std::make_unique<ClearEffect>();
+	clearEffect_->Initialize();
 }
 
 void OosakiScene::Update() {
@@ -56,12 +62,12 @@ void OosakiScene::Update() {
 	camera_->SetTranslate(transform_.translate);
 	camera_->setRotation(transform_.rotate);
 	camera_->Update();
-	
-	
+
 	// TODO: ここに更新処理（入力・ゲームロジック）を書く
 	// 別シーンへ遷移する例:  SceneManager::GetInstance()->ChangeScene(STAGE);   // 次フレームで切り替わる
 
 	rubikCube_->Update();
+	TuboEngine::ParticleManager::GetInstance()->Update(1.0f / 60.0f, camera_.get());
 }
 
 void OosakiScene::Finalize() {}
@@ -76,4 +82,7 @@ void OosakiScene::ImGuiDraw() {
 }    // TODO: ImGui描画
 
 
-void OosakiScene::ParticleDraw() {} // TODO: パーティクル描画
+void OosakiScene::ParticleDraw() {
+	// パーティクルの実描画。Update と対になっている。
+	TuboEngine::ParticleManager::GetInstance()->Draw();
+} // TODO: パーティクル描画

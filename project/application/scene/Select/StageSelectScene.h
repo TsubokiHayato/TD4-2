@@ -44,4 +44,5 @@ private:
 
 	std::unique_ptr<FadeScreen> fadeScreen_ = nullptr;
 	bool isSelecting_ = false;//選択し、決定ボタンを押した
+	bool isTutorialSelecting_ = false;//チュートリアルを選択した
 };

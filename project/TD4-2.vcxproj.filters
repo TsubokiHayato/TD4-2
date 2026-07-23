@@ -27,6 +27,7 @@
     <ClCompile Include="TutorialUI.cpp" />
     <ClCompile Include="application\scene\Select\StageSelectScene.cpp" />
     <ClCompile Include="FadeScreen.cpp" />
+    <ClCompile Include="ClearEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application\Order.h" />
@@ -61,6 +62,7 @@
     <ClInclude Include="TutorialUI.h" />
     <ClInclude Include="application\scene\Select\StageSelectScene.h" />
     <ClInclude Include="FadeScreen.h" />
+    <ClInclude Include="ClearEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="application">
